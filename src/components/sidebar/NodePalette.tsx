@@ -28,6 +28,7 @@ import {
   Calculator,
   CheckCheck,
   MessageSquareText,
+  Stamp,
 } from 'lucide-react';
 import type { NodeType } from '@/types/flow';
 
@@ -55,6 +56,7 @@ const nodeDefinitions: NodeDefinition[] = [
   { type: 'sendSticker', label: 'Send Sticker', icon: <Sticker size={18} />, color: '#d946ef', category: 'messages' },
   { type: 'sendButtons', label: 'Send Buttons', icon: <MousePointerClick size={18} />, color: '#f59e0b', category: 'messages' },
   { type: 'sendList', label: 'Send List', icon: <List size={18} />, color: '#ec4899', category: 'messages' },
+  { type: 'sendStampCard', label: 'Send Stamp Card', icon: <Stamp size={18} />, color: '#84cc16', category: 'messages' },
 
   // User Data
   { type: 'getCustomerPhone', label: 'Get Phone', icon: <Phone size={18} />, color: '#0891b2', category: 'userData' },

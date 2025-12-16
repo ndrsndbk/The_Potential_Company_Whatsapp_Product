@@ -648,6 +648,45 @@ export class FlowEngine {
         return { success: true };
       }
 
+      case 'sendStampCard': {
+        // Get config values with variable interpolation
+        const stampServerUrl = interpolate(config.stampServerUrl || 'http://localhost:3000', this.variables);
+        const stampCount = interpolate(config.stampCount || '0', this.variables);
+        const customerName = interpolate(config.customerName || '', this.variables);
+        const title = config.title ? interpolate(config.title, this.variables) : null;
+        const subtitle = config.subtitle ? interpolate(config.subtitle, this.variables) : null;
+        const caption = config.caption ? interpolate(config.caption, this.variables) : null;
+
+        // Build the stamp card URL
+        let stampCardUrl;
+        if (config.useCustomTemplate && config.customHtml) {
+          // For custom template, we'd need to POST the HTML to a custom endpoint
+          // For now, use the standard endpoint with additional params
+          const params = new URLSearchParams({
+            n: stampCount,
+            name: customerName,
+          });
+          if (title) params.append('title', title);
+          if (subtitle) params.append('subtitle', subtitle);
+          if (config.customHtml) params.append('html', config.customHtml);
+          if (config.customStyle) params.append('style', config.customStyle);
+          stampCardUrl = `${stampServerUrl}/generate-card?${params.toString()}`;
+        } else {
+          // Standard endpoint
+          const params = new URLSearchParams({
+            n: stampCount,
+            name: customerName,
+          });
+          if (title) params.append('title', title);
+          if (subtitle) params.append('subtitle', subtitle);
+          stampCardUrl = `${stampServerUrl}/generate-card?${params.toString()}`;
+        }
+
+        // Send the stamp card as an image
+        await wa.sendImage(this.config.access_token, this.config.phone_number_id, customerId, stampCardUrl, caption);
+        return { success: true };
+      }
+
       default:
         return { success: true };
     }

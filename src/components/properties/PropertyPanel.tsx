@@ -26,6 +26,7 @@ import type {
   DateTimeConfig,
   MathOperationConfig,
   TextOperationConfig,
+  SendStampCardConfig,
 } from '@/types/flow';
 
 export function PropertyPanel() {
@@ -228,6 +229,13 @@ export function PropertyPanel() {
             <div className="text-sm text-gray-500">
               This node marks the last received message as read. No configuration needed.
             </div>
+          )}
+          {/* Stamp card */}
+          {data.nodeType === 'sendStampCard' && (
+            <SendStampCardConfigForm
+              config={data.config as SendStampCardConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
           )}
         </div>
 
@@ -1383,6 +1391,123 @@ function TextOperationConfigForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+      )}
+    </>
+  );
+}
+
+// Stamp card config form
+function SendStampCardConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendStampCardConfig;
+  onChange: (c: Partial<SendStampCardConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Server URL</label>
+        <input
+          type="text"
+          value={config.stampServerUrl || ''}
+          onChange={(e) => onChange({ stampServerUrl: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="http://localhost:3000"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Count</label>
+        <input
+          type="text"
+          value={config.stampCount || ''}
+          onChange={(e) => onChange({ stampCount: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="{{stamp_count}} or 5"
+        />
+        <p className="mt-1 text-xs text-gray-500">Number 0-10 or use {'{{variable}}'}</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+        <input
+          type="text"
+          value={config.customerName || ''}
+          onChange={(e) => onChange({ customerName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="{{customer_name}}"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+        <input
+          type="text"
+          value={config.title || ''}
+          onChange={(e) => onChange({ title: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="ORIGIN JUICE BAR (default)"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle (optional)</label>
+        <input
+          type="text"
+          value={config.subtitle || ''}
+          onChange={(e) => onChange({ subtitle: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Get 10 stamps to earn 1 free drink (default)"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
+        <input
+          type="text"
+          value={config.caption || ''}
+          onChange={(e) => onChange({ caption: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Your loyalty card"
+        />
+      </div>
+
+      {/* Custom template toggle */}
+      <div className="flex items-center gap-2 pt-2 border-t border-gray-200 mt-2">
+        <input
+          type="checkbox"
+          id="useCustomTemplate"
+          checked={config.useCustomTemplate || false}
+          onChange={(e) => onChange({ useCustomTemplate: e.target.checked })}
+          className="rounded"
+        />
+        <label htmlFor="useCustomTemplate" className="text-sm text-gray-700">
+          Use custom HTML template
+        </label>
+      </div>
+
+      {config.useCustomTemplate && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Custom HTML</label>
+            <textarea
+              value={config.customHtml || ''}
+              onChange={(e) => onChange({ customHtml: e.target.value })}
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+              placeholder="<!DOCTYPE html>..."
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Use {'{{n}}'} for stamp count, {'{{name}}'} for customer name
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Custom CSS (optional)</label>
+            <textarea
+              value={config.customStyle || ''}
+              onChange={(e) => onChange({ customStyle: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+              placeholder=".card { background: #000; }"
+            />
+          </div>
+        </>
       )}
     </>
   );

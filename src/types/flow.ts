@@ -33,7 +33,9 @@ export type NodeType =
   | 'dateTime'
   | 'mathOperation'
   | 'textOperation'
-  | 'markAsRead';
+  | 'markAsRead'
+  // Stamp card
+  | 'sendStampCard';
 
 // Node configurations
 export interface TriggerConfig {
@@ -242,6 +244,19 @@ export interface MarkAsReadConfig {
   // No config needed, already handled by webhook
 }
 
+// Stamp card config
+export interface SendStampCardConfig {
+  stampServerUrl: string;
+  stampCount: string; // Can use {{variable}}
+  customerName: string; // Can use {{variable}}
+  title?: string; // Optional title override
+  subtitle?: string; // Optional subtitle override
+  useCustomTemplate: boolean;
+  customHtml?: string; // Full HTML template when useCustomTemplate is true
+  customStyle?: string; // Additional CSS styles
+  caption?: string; // WhatsApp image caption
+}
+
 export type NodeConfig =
   | TriggerConfig
   | SendTextConfig
@@ -271,7 +286,8 @@ export type NodeConfig =
   | DateTimeConfig
   | MathOperationConfig
   | TextOperationConfig
-  | MarkAsReadConfig;
+  | MarkAsReadConfig
+  | SendStampCardConfig;
 
 // Flow node data - must extend Record<string, unknown> for React Flow
 export interface FlowNodeData extends Record<string, unknown> {

@@ -116,6 +116,19 @@ const getDefaultConfig = (type: NodeType): NodeConfig => {
       return { variableName: 'result', operation: 'uppercase', text: '' };
     case 'markAsRead':
       return {};
+    // Stamp card
+    case 'sendStampCard':
+      return {
+        stampServerUrl: 'http://localhost:3000',
+        stampCount: '{{stamp_count}}',
+        customerName: '{{customer_name}}',
+        title: '',
+        subtitle: '',
+        useCustomTemplate: false,
+        customHtml: '',
+        customStyle: '',
+        caption: '',
+      };
     default:
       return {} as NodeConfig;
   }
@@ -155,6 +168,8 @@ const getNodeLabel = (type: NodeType): string => {
     mathOperation: 'Math',
     textOperation: 'Text Transform',
     markAsRead: 'Mark as Read',
+    // Stamp card
+    sendStampCard: 'Send Stamp Card',
   };
   return labels[type];
 };
