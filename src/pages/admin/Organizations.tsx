@@ -107,36 +107,36 @@ export function AdminOrganizations() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ECE5DD]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[#075E54]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Building2 className="text-purple-600" size={24} />
+            <div className="p-2 bg-[#25D366] rounded-lg">
+              <Building2 className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">Organizations</h1>
-              <p className="text-sm text-gray-500">Manage organizations</p>
+              <h1 className="text-xl font-bold text-white">Organizations</h1>
+              <p className="text-sm text-white/70">Manage organizations</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={loadOrganizations}
               disabled={loading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-50"
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-[#075E54] bg-[#25D366] rounded-lg hover:bg-[#128C7E] hover:text-white transition-colors font-medium"
             >
               <Plus size={18} />
               New Organization
@@ -155,12 +155,12 @@ export function AdminOrganizations() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-800">{organizations.length}</div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#075E54]">{organizations.length}</div>
             <div className="text-sm text-gray-500">Total Organizations</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#25D366]">
               {organizations.filter((o) => o.is_active).length}
             </div>
             <div className="text-sm text-gray-500">Active</div>
@@ -171,7 +171,7 @@ export function AdminOrganizations() {
         {loading && organizations.length === 0 ? (
           <div className="text-center py-12 text-gray-500">Loading organizations...</div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -197,11 +197,11 @@ export function AdminOrganizations() {
                   <tr key={org.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Building2 className="text-purple-600" size={20} />
+                        <div className="h-10 w-10 flex-shrink-0 bg-[#DCF8C6] rounded-lg flex items-center justify-center">
+                          <Building2 className="text-[#075E54]" size={20} />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{org.name}</div>
+                          <div className="text-sm font-medium text-[#075E54]">{org.name}</div>
                         </div>
                       </div>
                     </td>
@@ -213,7 +213,7 @@ export function AdminOrganizations() {
                         onClick={() => toggleActive(org)}
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           org.is_active
-                            ? 'text-green-700 bg-green-100 hover:bg-green-200'
+                            ? 'text-[#075E54] bg-[#DCF8C6] hover:bg-[#25D366]/30'
                             : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                         }`}
                       >
@@ -226,7 +226,7 @@ export function AdminOrganizations() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => openEditModal(org)}
-                        className="text-purple-600 hover:text-purple-900 mr-3"
+                        className="text-[#128C7E] hover:text-[#075E54] mr-3"
                       >
                         <Edit2 size={16} />
                       </button>
@@ -265,7 +265,7 @@ export function AdminOrganizations() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                   placeholder="Organization name"
                 />
               </div>
@@ -276,7 +276,7 @@ export function AdminOrganizations() {
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                   placeholder="organization-slug"
                 />
               </div>
@@ -287,7 +287,7 @@ export function AdminOrganizations() {
                   type="text"
                   value={formData.logo_url}
                   onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                   placeholder="https://example.com/logo.png"
                 />
               </div>
@@ -302,7 +302,7 @@ export function AdminOrganizations() {
               </button>
               <button
                 onClick={editingOrg ? handleUpdate : handleCreate}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                className="flex items-center gap-2 px-4 py-2 text-white bg-[#25D366] rounded-lg hover:bg-[#128C7E]"
               >
                 <Check size={16} />
                 {editingOrg ? 'Update' : 'Create'}

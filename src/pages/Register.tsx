@@ -61,8 +61,8 @@ export function Register() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel - Light Green with Hero Image */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#dcfce7] items-center justify-center p-8">
+      {/* Left Panel - WhatsApp Chat Bubble Green */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#DCF8C6] items-center justify-center p-8">
         <img
           src="/login_hero.png"
           alt="Flow Builder"
@@ -75,7 +75,7 @@ export function Register() {
         <div className="w-full max-w-md">
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">FLOW BUILDER</h1>
+            <h1 className="text-3xl font-bold text-[#075E54] mb-2">FLOW BUILDER</h1>
             <p className="text-gray-600">Create your account</p>
           </div>
 
@@ -99,7 +99,7 @@ export function Register() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none transition-all"
                 placeholder="Enter your full name"
                 disabled={loading}
               />
@@ -116,7 +116,7 @@ export function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none transition-all"
                 placeholder="Enter your email"
                 disabled={loading}
               />
@@ -134,7 +134,7 @@ export function Register() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none transition-all"
                   placeholder="Create a password"
                   disabled={loading}
                 />
@@ -164,7 +164,7 @@ export function Register() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none transition-all"
                   placeholder="Confirm your password"
                   disabled={loading}
                 />
@@ -183,7 +183,7 @@ export function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1f2937] text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#25D366] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#128C7E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -192,7 +192,7 @@ export function Register() {
           {/* Login Link */}
           <div className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-green-600 hover:text-green-700 font-medium">
+            <Link to="/login" className="text-[#25D366] hover:text-[#128C7E] font-medium">
               Sign in
             </Link>
           </div>

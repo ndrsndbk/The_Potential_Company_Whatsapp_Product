@@ -208,36 +208,36 @@ export function FlowEditor() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-screen flex flex-col bg-[#ECE5DD]">
       {/* Header */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+      <header className="h-14 bg-[#075E54] flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-gray-800">{flowName}</h1>
+            <h1 className="text-lg font-semibold text-white">{flowName}</h1>
             <div className="flex items-center gap-2 text-xs">
-              {isDirty && <span className="text-amber-600">Unsaved changes</span>}
+              {isDirty && <span className="text-amber-300">Unsaved changes</span>}
               {isPublished && (
-                <span className="text-green-600 font-medium">Published</span>
+                <span className="text-[#25D366] font-medium">Published</span>
               )}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {error && (
-            <span className="text-sm text-red-600 mr-2">{error}</span>
+            <span className="text-sm text-red-300 mr-2">{error}</span>
           )}
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={`p-2 rounded-lg transition-colors ${
               showSettings
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                ? 'text-[#25D366] bg-white/20'
+                : 'text-white/80 hover:text-white hover:bg-white/10'
             }`}
           >
             <Settings size={20} />
@@ -245,7 +245,7 @@ export function FlowEditor() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-[#075E54] bg-[#25D366] rounded-lg hover:bg-[#128C7E] hover:text-white transition-colors disabled:opacity-50 font-medium"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save
@@ -253,7 +253,7 @@ export function FlowEditor() {
           <button
             onClick={handlePublish}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-white bg-[#128C7E] rounded-lg hover:bg-[#075E54] transition-colors disabled:opacity-50 font-medium"
           >
             <Upload size={18} />
             Publish
@@ -339,7 +339,7 @@ export function FlowEditor() {
               <button
                 onClick={() => flowId && navigate(`/editor/${flowId}/logs`)}
                 disabled={!flowId}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-[#075E54] bg-[#DCF8C6] border border-[#128C7E]/30 rounded-md hover:bg-[#25D366]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <BarChart3 size={16} />
                 View All Time Logs

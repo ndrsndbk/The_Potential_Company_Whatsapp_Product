@@ -53,7 +53,7 @@ function LineChart({ data }: { data: DailyStats[] }) {
         <path
           d={pathD}
           fill="none"
-          stroke="#8b5cf6"
+          stroke="#25D366"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -66,15 +66,15 @@ function LineChart({ data }: { data: DailyStats[] }) {
             cx={p.x}
             cy={p.y}
             r="1.5"
-            fill="#8b5cf6"
+            fill="#25D366"
           />
         ))}
 
         {/* Gradient definition */}
         <defs>
           <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+            <stop offset="0%" stopColor="#25D366" />
+            <stop offset="100%" stopColor="#25D366" stopOpacity="0" />
           </linearGradient>
         </defs>
       </svg>
@@ -142,7 +142,7 @@ export function FlowLogs() {
     switch (status) {
       case 'completed':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#075E54] bg-[#DCF8C6] rounded-full">
             <CheckCircle2 size={12} />
             Completed
           </span>
@@ -156,7 +156,7 @@ export function FlowLogs() {
         );
       case 'in_progress':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#128C7E] bg-[#DCF8C6]/50 rounded-full">
             <Clock size={12} />
             In Progress
           </span>
@@ -165,25 +165,25 @@ export function FlowLogs() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ECE5DD]">
       {/* Header */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+      <header className="h-14 bg-[#075E54] flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(`/editor/${id}`)}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-gray-800">Flow Analytics</h1>
-            <p className="text-xs text-gray-500">All time execution logs</p>
+            <h1 className="text-lg font-semibold text-white">Flow Analytics</h1>
+            <p className="text-xs text-white/70">All time execution logs</p>
           </div>
         </div>
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-[#075E54] bg-[#25D366] rounded-lg hover:bg-[#128C7E] hover:text-white transition-colors disabled:opacity-50 font-medium"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           Refresh
@@ -201,74 +201,74 @@ export function FlowLogs() {
 
         {/* Score Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Activity size={20} className="text-purple-600" />
+              <div className="p-2 bg-[#DCF8C6] rounded-lg">
+                <Activity size={20} className="text-[#075E54]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total Executions</p>
-                <p className="text-2xl font-bold text-gray-800">{stats?.total ?? 0}</p>
+                <p className="text-2xl font-bold text-[#075E54]">{stats?.total ?? 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle2 size={20} className="text-green-600" />
+              <div className="p-2 bg-[#DCF8C6] rounded-lg">
+                <CheckCircle2 size={20} className="text-[#25D366]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-800">{stats?.success_rate ?? '0'}%</p>
+                <p className="text-2xl font-bold text-[#25D366]">{stats?.success_rate ?? '0'}%</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
                 <XCircle size={20} className="text-red-600" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Failed</p>
-                <p className="text-2xl font-bold text-gray-800">{stats?.failed ?? 0}</p>
+                <p className="text-2xl font-bold text-red-600">{stats?.failed ?? 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock size={20} className="text-blue-600" />
+              <div className="p-2 bg-[#DCF8C6] rounded-lg">
+                <Clock size={20} className="text-[#128C7E]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Avg Duration</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className="text-2xl font-bold text-[#128C7E]">
                   {stats?.avg_duration_ms ? (stats.avg_duration_ms / 1000).toFixed(2) : '0'}s
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Users size={20} className="text-amber-600" />
+              <div className="p-2 bg-[#DCF8C6] rounded-lg">
+                <Users size={20} className="text-[#075E54]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Unique Users</p>
-                <p className="text-2xl font-bold text-gray-800">{stats?.unique_customers ?? 0}</p>
+                <p className="text-2xl font-bold text-[#075E54]">{stats?.unique_customers ?? 0}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Line Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp size={20} className="text-purple-600" />
-            <h2 className="text-lg font-semibold text-gray-800">Execution Trends (Last 14 Days)</h2>
+            <TrendingUp size={20} className="text-[#25D366]" />
+            <h2 className="text-lg font-semibold text-[#075E54]">Execution Trends (Last 14 Days)</h2>
           </div>
           {loading ? (
             <div className="h-[200px] flex items-center justify-center">
@@ -280,9 +280,9 @@ export function FlowLogs() {
         </div>
 
         {/* Logs Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">Execution Logs</h2>
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-[#075E54]">Execution Logs</h2>
           </div>
 
           {loading ? (
@@ -292,7 +292,7 @@ export function FlowLogs() {
             </div>
           ) : logs.length === 0 ? (
             <div className="p-8 text-center">
-              <Activity size={32} className="text-gray-300 mx-auto mb-2" />
+              <Activity size={32} className="text-[#128C7E]/30 mx-auto mb-2" />
               <p className="text-gray-500">No execution logs yet</p>
               <p className="text-sm text-gray-400 mt-1">Logs will appear here when customers interact with this flow</p>
             </div>

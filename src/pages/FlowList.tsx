@@ -63,24 +63,24 @@ export function FlowList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ECE5DD]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[#075E54]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Workflow className="text-green-600" size={24} />
+            <div className="p-2 bg-[#25D366] rounded-lg">
+              <Workflow className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">WhatsApp Flow Builder</h1>
-              <p className="text-sm text-gray-500">Create and manage your conversation flows</p>
+              <h1 className="text-xl font-bold text-white">WhatsApp Flow Builder</h1>
+              <p className="text-sm text-white/70">Create and manage your conversation flows</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={loadFlows}
               disabled={loading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-50"
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -88,14 +88,14 @@ export function FlowList() {
               href="/docs/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
               title="Documentation"
             >
               <BookOpen size={20} />
             </a>
             <button
               onClick={() => navigate('/settings')}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
               title="Settings"
             >
               <Settings size={20} />
@@ -104,14 +104,14 @@ export function FlowList() {
               <>
                 <button
                   onClick={() => navigate('/admin/organizations')}
-                  className="p-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100 rounded-lg"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
                   title="Organizations"
                 >
                   <Building2 size={20} />
                 </button>
                 <button
                   onClick={() => navigate('/admin/users')}
-                  className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
                   title="Users"
                 >
                   <Users size={20} />
@@ -120,14 +120,14 @@ export function FlowList() {
             )}
             <button
               onClick={createNewFlow}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-[#075E54] bg-[#25D366] rounded-lg hover:bg-[#128C7E] hover:text-white transition-colors font-medium"
             >
               <Plus size={18} />
               New Flow
             </button>
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+              className="p-2 text-white/80 hover:text-red-300 hover:bg-white/10 rounded-lg"
               title="Logout"
             >
               <LogOut size={20} />
@@ -146,18 +146,18 @@ export function FlowList() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-800">{flows.length}</div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#075E54]">{flows.length}</div>
             <div className="text-sm text-gray-500">Total Flows</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#25D366]">
               {flows.filter((f) => f.is_active).length}
             </div>
             <div className="text-sm text-gray-500">Active Flows</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#128C7E]">
               {flows.filter((f) => f.is_published).length}
             </div>
             <div className="text-sm text-gray-500">Published</div>
@@ -173,18 +173,18 @@ export function FlowList() {
               <div
                 key={flow.id}
                 onClick={() => editFlow(flow.id)}
-                className="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all group"
+                className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-gray-800">{flow.name}</h3>
+                  <h3 className="font-semibold text-[#075E54]">{flow.name}</h3>
                   <div className="flex gap-1 items-center">
                     {flow.is_active && (
-                      <span className="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium text-[#075E54] bg-[#DCF8C6] rounded-full">
                         Active
                       </span>
                     )}
                     {flow.is_published && (
-                      <span className="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium text-[#128C7E] bg-[#DCF8C6] rounded-full">
                         Published
                       </span>
                     )}
@@ -209,10 +209,10 @@ export function FlowList() {
             {/* Empty state / New flow card */}
             <div
               onClick={createNewFlow}
-              className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-4 cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all flex flex-col items-center justify-center min-h-[120px]"
+              className="bg-white/50 rounded-lg border-2 border-dashed border-[#128C7E]/30 p-4 cursor-pointer hover:border-[#25D366] hover:bg-[#DCF8C6]/50 transition-all flex flex-col items-center justify-center min-h-[120px]"
             >
-              <Plus className="text-gray-400 mb-2" size={24} />
-              <span className="text-sm text-gray-500">Create New Flow</span>
+              <Plus className="text-[#128C7E] mb-2" size={24} />
+              <span className="text-sm text-[#075E54]">Create New Flow</span>
             </div>
           </div>
         )}

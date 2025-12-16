@@ -139,36 +139,36 @@ export function AdminUsers() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ECE5DD]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[#075E54]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <UsersIcon className="text-blue-600" size={24} />
+            <div className="p-2 bg-[#25D366] rounded-lg">
+              <UsersIcon className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">Users</h1>
-              <p className="text-sm text-gray-500">Manage users</p>
+              <h1 className="text-xl font-bold text-white">Users</h1>
+              <p className="text-sm text-white/70">Manage users</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={loadData}
               disabled={loading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-50"
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-[#075E54] bg-[#25D366] rounded-lg hover:bg-[#128C7E] hover:text-white transition-colors font-medium"
             >
               <Plus size={18} />
               New User
@@ -187,24 +187,24 @@ export function AdminUsers() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-800">{users.length}</div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#075E54]">{users.length}</div>
             <div className="text-sm text-gray-500">Total Users</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#25D366]">
               {users.filter((u) => u.is_active).length}
             </div>
             <div className="text-sm text-gray-500">Active</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="text-2xl font-bold text-red-600">
               {users.filter((u) => u.role === 'super_admin').length}
             </div>
             <div className="text-sm text-gray-500">Super Admins</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-2xl font-bold text-[#128C7E]">
               {users.filter((u) => u.role === 'org_admin').length}
             </div>
             <div className="text-sm text-gray-500">Org Admins</div>
@@ -215,7 +215,7 @@ export function AdminUsers() {
         {loading && users.length === 0 ? (
           <div className="text-center py-12 text-gray-500">Loading users...</div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -244,13 +244,13 @@ export function AdminUsers() {
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-medium">
+                        <div className="h-10 w-10 flex-shrink-0 bg-[#DCF8C6] rounded-full flex items-center justify-center">
+                          <span className="text-[#075E54] font-medium">
                             {(user.full_name || user.email).charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-[#075E54]">
                             {user.full_name || 'No name'}
                           </div>
                           <div className="text-sm text-gray-500">{user.email}</div>
@@ -274,7 +274,7 @@ export function AdminUsers() {
                         onClick={() => toggleActive(user)}
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           user.is_active
-                            ? 'text-green-700 bg-green-100 hover:bg-green-200'
+                            ? 'text-[#075E54] bg-[#DCF8C6] hover:bg-[#25D366]/30'
                             : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                         }`}
                       >
@@ -287,7 +287,7 @@ export function AdminUsers() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-[#128C7E] hover:text-[#075E54] mr-3"
                       >
                         <Edit2 size={16} />
                       </button>
@@ -326,7 +326,7 @@ export function AdminUsers() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                       placeholder="user@example.com"
                     />
                   </div>
@@ -337,7 +337,7 @@ export function AdminUsers() {
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                       placeholder="Password"
                     />
                   </div>
@@ -350,7 +350,7 @@ export function AdminUsers() {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
@@ -365,7 +365,7 @@ export function AdminUsers() {
                       role: e.target.value as 'super_admin' | 'org_admin' | 'user',
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                 >
                   <option value="user">User</option>
                   <option value="org_admin">Org Admin</option>
@@ -378,7 +378,7 @@ export function AdminUsers() {
                 <select
                   value={formData.organization_id}
                   onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
                 >
                   <option value="">No Organization</option>
                   {organizations.map((org) => (
@@ -399,7 +399,7 @@ export function AdminUsers() {
               </button>
               <button
                 onClick={editingUser ? handleUpdate : handleCreate}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="flex items-center gap-2 px-4 py-2 text-white bg-[#25D366] rounded-lg hover:bg-[#128C7E]"
               >
                 <Check size={16} />
                 {editingUser ? 'Update' : 'Create'}

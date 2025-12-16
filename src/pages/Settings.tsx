@@ -91,24 +91,24 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ECE5DD]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[#075E54]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-gray-800">Settings</h1>
-            <p className="text-sm text-gray-500">Manage WhatsApp API configurations</p>
+            <h1 className="text-xl font-bold text-white">Settings</h1>
+            <p className="text-sm text-white/70">Manage WhatsApp API configurations</p>
           </div>
           <button
             onClick={loadConfigs}
             disabled={loading}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-50"
           >
             <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -123,15 +123,15 @@ export function Settings() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[#075E54]">
               WhatsApp Numbers ({configs.length}/2)
             </h2>
             {configs.length < 2 && (
               <button
                 onClick={() => setShowAddForm(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#25D366] hover:bg-[#DCF8C6] rounded-lg transition-colors"
               >
                 <Plus size={16} />
                 Add Number
@@ -148,11 +148,11 @@ export function Settings() {
                 <div key={config.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Phone className="text-green-600" size={20} />
+                      <div className="p-2 bg-[#DCF8C6] rounded-lg">
+                        <Phone className="text-[#25D366]" size={20} />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-800">{config.name}</div>
+                        <div className="font-medium text-[#075E54]">{config.name}</div>
                         <div className="text-sm text-gray-500">{config.phone_number}</div>
                         <div className="text-xs text-gray-400">
                           ID: {config.phone_number_id}
@@ -166,7 +166,7 @@ export function Settings() {
                         title="Copy webhook URL"
                       >
                         {copiedId === config.id ? (
-                          <Check size={14} className="text-green-600" />
+                          <Check size={14} className="text-[#25D366]" />
                         ) : (
                           <Copy size={14} />
                         )}
@@ -195,11 +195,11 @@ export function Settings() {
 
             {!loading && configs.length === 0 && !showAddForm && (
               <div className="p-8 text-center text-gray-500">
-                <Phone className="mx-auto mb-2 text-gray-300" size={40} />
+                <Phone className="mx-auto mb-2 text-[#128C7E]/30" size={40} />
                 <p>No WhatsApp numbers configured</p>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-2 text-green-600 hover:text-green-700"
+                  className="mt-2 text-[#25D366] hover:text-[#128C7E]"
                 >
                   Add your first number
                 </button>
@@ -274,7 +274,7 @@ export function Settings() {
                   <button
                     onClick={handleAddConfig}
                     disabled={saving}
-                    className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                    className="px-4 py-2 text-white bg-[#25D366] rounded-md hover:bg-[#128C7E] disabled:opacity-50"
                   >
                     {saving ? 'Adding...' : 'Add Number'}
                   </button>
@@ -295,12 +295,12 @@ export function Settings() {
         </div>
 
         {/* Info */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="font-medium text-blue-800 mb-2">How to get these values:</h3>
-          <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+        <div className="mt-6 p-4 bg-[#DCF8C6] rounded-lg border border-[#128C7E]/20">
+          <h3 className="font-medium text-[#075E54] mb-2">How to get these values:</h3>
+          <ol className="text-sm text-[#075E54]/80 space-y-1 list-decimal list-inside">
             <li>Go to Meta for Developers &gt; WhatsApp &gt; API Setup</li>
             <li>Copy the Phone Number ID and generate a permanent Access Token</li>
-            <li>Set up webhook URL: <code className="bg-blue-100 px-1 rounded">https://yourdomain.com/webhook/[config-id]</code></li>
+            <li>Set up webhook URL: <code className="bg-[#128C7E]/10 px-1 rounded">https://yourdomain.com/webhook/[config-id]</code></li>
             <li>Subscribe to messages webhook events</li>
           </ol>
         </div>
