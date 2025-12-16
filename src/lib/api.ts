@@ -224,6 +224,53 @@ export interface User {
   organization?: Organization | null;
 }
 
+// Flow Logs types
+export interface FlowLog {
+  id: string;
+  executed_at: string;
+  customer_phone: string;
+  customer_name: string | null;
+  status: 'completed' | 'failed' | 'in_progress';
+  duration_ms: number | null;
+  nodes_executed: number;
+  error_message: string | null;
+}
+
+export interface FlowLogStats {
+  total: number;
+  completed: number;
+  failed: number;
+  success_rate: string;
+  avg_duration_ms: number;
+  unique_customers: number;
+}
+
+export interface DailyStats {
+  date: string;
+  executions: number;
+  success: number;
+  failed: number;
+}
+
+export interface FlowLogsResponse {
+  logs: FlowLog[];
+  stats: FlowLogStats;
+  daily_stats: DailyStats[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}
+
+// Flow Logs API
+export const flowLogsApi = {
+  async get(flowId: string, limit = 100, offset = 0): Promise<FlowLogsResponse> {
+    return fetchApi(`/flows/${flowId}/logs?limit=${limit}&offset=${offset}`);
+  },
+};
+
 // Admin Organizations API
 export const adminOrganizationsApi = {
   async list(): Promise<{ organizations: Organization[] }> {

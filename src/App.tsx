@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { FlowList } from '@/pages/FlowList';
 import { FlowEditor } from '@/pages/FlowEditor';
+import { FlowLogs } from '@/pages/FlowLogs';
 import { Settings } from '@/pages/Settings';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
@@ -74,6 +75,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <FlowEditor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/editor/:id/logs"
+            element={
+              <ProtectedRoute>
+                <FlowLogs />
               </ProtectedRoute>
             }
           />
