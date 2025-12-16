@@ -1,4 +1,4 @@
-import { type DragEvent } from 'react';
+import { type DragEvent, useState, useMemo } from 'react';
 import {
   Zap,
   MessageSquare,
@@ -29,6 +29,9 @@ import {
   CheckCheck,
   MessageSquareText,
   Stamp,
+  ChevronRight,
+  Search,
+  X,
 } from 'lucide-react';
 import type { NodeType } from '@/types/flow';
 
@@ -85,12 +88,12 @@ const nodeDefinitions: NodeDefinition[] = [
 ];
 
 const categories = [
-  { id: 'triggers', label: 'Triggers' },
-  { id: 'messages', label: 'Messages' },
-  { id: 'userData', label: 'User Data' },
-  { id: 'logic', label: 'Logic' },
-  { id: 'utilities', label: 'Utilities' },
-  { id: 'actions', label: 'Actions' },
+  { id: 'triggers', label: 'Triggers', icon: <Zap size={16} />, color: '#22c55e' },
+  { id: 'messages', label: 'Messages', icon: <MessageSquare size={16} />, color: '#3b82f6' },
+  { id: 'userData', label: 'User Data', icon: <User size={16} />, color: '#0891b2' },
+  { id: 'logic', label: 'Logic', icon: <GitBranch size={16} />, color: '#6366f1' },
+  { id: 'utilities', label: 'Utilities', icon: <Calculator size={16} />, color: '#64748b' },
+  { id: 'actions', label: 'Actions', icon: <Globe size={16} />, color: '#f97316' },
 ] as const;
 
 function DraggableNode({ node }: { node: NodeDefinition }) {
@@ -106,38 +109,155 @@ function DraggableNode({ node }: { node: NodeDefinition }) {
       onDragStart={(e) => onDragStart(e, node.type)}
     >
       <div
-        className="flex items-center justify-center w-8 h-8 rounded-md text-white"
+        className="flex items-center justify-center w-7 h-7 rounded-md text-white flex-shrink-0"
         style={{ backgroundColor: node.color }}
       >
         {node.icon}
       </div>
-      <span className="text-sm font-medium text-gray-700">{node.label}</span>
+      <span className="text-sm font-medium text-gray-700 truncate">{node.label}</span>
+    </div>
+  );
+}
+
+interface AccordionProps {
+  category: typeof categories[number];
+  nodes: NodeDefinition[];
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+function CategoryAccordion({ category, nodes, isOpen, onToggle }: AccordionProps) {
+  if (nodes.length === 0) return null;
+
+  return (
+    <div className="overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center justify-center w-6 h-6 rounded text-white"
+            style={{ backgroundColor: category.color }}
+          >
+            {category.icon}
+          </div>
+          <span className="text-sm font-medium text-gray-700">{category.label}</span>
+          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+            {nodes.length}
+          </span>
+        </div>
+        <ChevronRight
+          size={16}
+          className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+        />
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="pl-6 pr-1 pb-2 pt-1 space-y-1.5">
+            {nodes.map((node) => (
+              <DraggableNode key={node.type} node={node} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function NodePalette() {
-  return (
-    <div className="w-64 h-full bg-gray-50 border-r border-gray-200 overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          Nodes
-        </h2>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(['triggers', 'messages', 'logic'])
+  );
 
-        {categories.map((category) => (
-          <div key={category.id} className="mb-6">
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-              {category.label}
-            </h3>
-            <div className="space-y-2">
-              {nodeDefinitions
-                .filter((node) => node.category === category.id)
-                .map((node) => (
-                  <DraggableNode key={node.type} node={node} />
-                ))}
+  const filteredNodes = useMemo(() => {
+    if (!searchQuery.trim()) return nodeDefinitions;
+    const query = searchQuery.toLowerCase();
+    return nodeDefinitions.filter(
+      (node) =>
+        node.label.toLowerCase().includes(query) ||
+        node.type.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
+  return (
+    <div className="w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-600 mb-3">Nodes</h2>
+
+        {/* Search Input */}
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search nodes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
+            >
+              <X size={14} className="text-gray-400" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Node List */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {hasSearchQuery ? (
+          // Show flat list when searching
+          filteredNodes.length > 0 ? (
+            <div className="space-y-1.5">
+              {filteredNodes.map((node) => (
+                <DraggableNode key={node.type} node={node} />
+              ))}
             </div>
-          </div>
-        ))}
+          ) : (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              No nodes found for "{searchQuery}"
+            </div>
+          )
+        ) : (
+          // Show accordions when not searching
+          categories.map((category) => {
+            const categoryNodes = filteredNodes.filter(
+              (node) => node.category === category.id
+            );
+            return (
+              <CategoryAccordion
+                key={category.id}
+                category={category}
+                nodes={categoryNodes}
+                isOpen={expandedCategories.has(category.id)}
+                onToggle={() => toggleCategory(category.id)}
+              />
+            );
+          })
+        )}
       </div>
     </div>
   );
