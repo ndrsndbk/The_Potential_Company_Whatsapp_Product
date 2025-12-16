@@ -107,3 +107,272 @@ CREATE POLICY "Service role full access" ON flow_edges FOR ALL USING (true);
 CREATE POLICY "Service role full access" ON flow_executions FOR ALL USING (true);
 CREATE POLICY "Service role full access" ON execution_logs FOR ALL USING (true);
 CREATE POLICY "Service role full access" ON processed_messages FOR ALL USING (true);
+
+-- Multi-tenant support: Organizations and Users
+-- Organizations table
+CREATE TABLE IF NOT EXISTS organizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    logo_url TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT,
+    avatar_url TEXT,
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('super_admin', 'org_admin', 'user')),
+    organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add organization_id to whatsapp_configs
+ALTER TABLE whatsapp_configs ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+
+-- Add organization_id and created_by to flows
+ALTER TABLE flows ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE flows ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+
+-- Indexes for organization-based access
+CREATE INDEX IF NOT EXISTS idx_whatsapp_configs_org ON whatsapp_configs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_flows_org ON flows(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Enable RLS on new tables
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Organizations
+-- Super admins can do everything
+CREATE POLICY "Super admins full access to organizations"
+    ON organizations FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM users
+            WHERE users.id = auth.uid()
+            AND users.role = 'super_admin'
+        )
+    );
+
+-- Users can view their own organization
+CREATE POLICY "Users can view own organization"
+    ON organizations FOR SELECT
+    USING (
+        id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+-- Org admins can update their own organization
+CREATE POLICY "Org admins can update own organization"
+    ON organizations FOR UPDATE
+    USING (
+        id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role IN ('org_admin', 'super_admin')
+        )
+    );
+
+-- RLS Policies for Users
+-- Super admins can do everything
+CREATE POLICY "Super admins full access to users"
+    ON users FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM users AS u
+            WHERE u.id = auth.uid()
+            AND u.role = 'super_admin'
+        )
+    );
+
+-- Users can view their own profile
+CREATE POLICY "Users can view own profile"
+    ON users FOR SELECT
+    USING (id = auth.uid());
+
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile"
+    ON users FOR UPDATE
+    USING (id = auth.uid());
+
+-- Org admins can view users in their organization
+CREATE POLICY "Org admins can view org users"
+    ON users FOR SELECT
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role = 'org_admin'
+        )
+    );
+
+-- Org admins can update users in their organization
+CREATE POLICY "Org admins can update org users"
+    ON users FOR UPDATE
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role = 'org_admin'
+        )
+    );
+
+-- Updated RLS Policies for existing tables (organization-based access)
+-- Drop existing service role policies (they still work but we add more granular ones)
+
+-- WhatsApp Configs: Users can only access configs in their organization
+CREATE POLICY "Users can view org whatsapp configs"
+    ON whatsapp_configs FOR SELECT
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Org admins can manage org whatsapp configs"
+    ON whatsapp_configs FOR ALL
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role IN ('org_admin', 'super_admin')
+        )
+    );
+
+-- Flows: Users can view flows in their organization
+CREATE POLICY "Users can view org flows"
+    ON flows FOR SELECT
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+-- Users can create flows in their organization
+CREATE POLICY "Users can create flows in org"
+    ON flows FOR INSERT
+    WITH CHECK (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+-- Users can update their own flows or org admins can update any flow in their org
+CREATE POLICY "Users can update own flows"
+    ON flows FOR UPDATE
+    USING (
+        created_by = auth.uid()
+        OR organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role IN ('org_admin', 'super_admin')
+        )
+    );
+
+-- Users can delete their own flows or org admins can delete any flow in their org
+CREATE POLICY "Users can delete own flows"
+    ON flows FOR DELETE
+    USING (
+        created_by = auth.uid()
+        OR organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+            AND users.role IN ('org_admin', 'super_admin')
+        )
+    );
+
+-- Flow Nodes: Inherit access from parent flow
+CREATE POLICY "Users can view org flow nodes"
+    ON flow_nodes FOR SELECT
+    USING (
+        flow_id IN (
+            SELECT id FROM flows
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );
+
+CREATE POLICY "Users can manage flow nodes"
+    ON flow_nodes FOR ALL
+    USING (
+        flow_id IN (
+            SELECT id FROM flows
+            WHERE created_by = auth.uid()
+            OR organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+                AND users.role IN ('org_admin', 'super_admin')
+            )
+        )
+    );
+
+-- Flow Edges: Inherit access from parent flow
+CREATE POLICY "Users can view org flow edges"
+    ON flow_edges FOR SELECT
+    USING (
+        flow_id IN (
+            SELECT id FROM flows
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );
+
+CREATE POLICY "Users can manage flow edges"
+    ON flow_edges FOR ALL
+    USING (
+        flow_id IN (
+            SELECT id FROM flows
+            WHERE created_by = auth.uid()
+            OR organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+                AND users.role IN ('org_admin', 'super_admin')
+            )
+        )
+    );
+
+-- Flow Executions: Users can view executions from their org's flows
+CREATE POLICY "Users can view org flow executions"
+    ON flow_executions FOR SELECT
+    USING (
+        flow_id IN (
+            SELECT id FROM flows
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );
+
+-- Execution Logs: Users can view logs from their org's executions
+CREATE POLICY "Users can view org execution logs"
+    ON execution_logs FOR SELECT
+    USING (
+        execution_id IN (
+            SELECT id FROM flow_executions
+            WHERE flow_id IN (
+                SELECT id FROM flows
+                WHERE organization_id IN (
+                    SELECT organization_id FROM users
+                    WHERE users.id = auth.uid()
+                )
+            )
+        )
+    );

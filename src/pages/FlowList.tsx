@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Settings, Workflow, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Settings, Workflow, RefreshCw, Trash2, Building2, Users, LogOut } from 'lucide-react';
 import { flowsApi, type Flow } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function FlowList() {
   const navigate = useNavigate();
+  const { logout, isSuperAdmin } = useAuth();
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     loadFlows();
@@ -83,12 +90,37 @@ export function FlowList() {
             >
               <Settings size={20} />
             </button>
+            {isSuperAdmin() && (
+              <>
+                <button
+                  onClick={() => navigate('/admin/organizations')}
+                  className="p-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100 rounded-lg"
+                  title="Organizations"
+                >
+                  <Building2 size={20} />
+                </button>
+                <button
+                  onClick={() => navigate('/admin/users')}
+                  className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg"
+                  title="Users"
+                >
+                  <Users size={20} />
+                </button>
+              </>
+            )}
             <button
               onClick={createNewFlow}
               className="flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
             >
               <Plus size={18} />
               New Flow
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+              title="Logout"
+            >
+              <LogOut size={20} />
             </button>
           </div>
         </div>

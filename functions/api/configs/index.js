@@ -1,17 +1,25 @@
-// GET /api/configs - List all WhatsApp configurations
-// POST /api/configs - Create new configuration
+// GET /api/configs - List all WhatsApp configurations for user's organization
+// POST /api/configs - Create new configuration in user's organization
 
 import { sbSelect, sbInsert } from '../../lib/supabase.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
+  const user = context.data?.user;
 
   try {
+    // Build filter based on user's organization
+    // Super admins can see all configs, others only see their org's configs
+    let filter = 'order=created_at.desc';
+    if (user && user.role !== 'super_admin' && user.organization_id) {
+      filter = `organization_id=eq.${user.organization_id}&order=created_at.desc`;
+    }
+
     const configs = await sbSelect(
       env,
       'whatsapp_configs',
-      'order=created_at.desc',
-      'id,name,phone_number_id,phone_number,is_active,created_at'
+      filter,
+      'id,name,phone_number_id,phone_number,is_active,created_at,organization_id'
     );
 
     return Response.json({ configs });
@@ -23,6 +31,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
+  const user = context.data?.user;
 
   try {
     const body = await request.json();
@@ -36,8 +45,12 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Check max 2 configs
-    const existing = await sbSelect(env, 'whatsapp_configs', '', 'id');
+    // Check max 2 configs per organization (or total for super admins)
+    let existingFilter = '';
+    if (user && user.role !== 'super_admin' && user.organization_id) {
+      existingFilter = `organization_id=eq.${user.organization_id}`;
+    }
+    const existing = await sbSelect(env, 'whatsapp_configs', existingFilter, 'id');
     if (existing.length >= 2) {
       return Response.json(
         { error: 'Maximum of 2 WhatsApp configurations allowed' },
@@ -45,17 +58,25 @@ export async function onRequestPost(context) {
       );
     }
 
+    // Build config data with organization_id
+    const configData = {
+      name,
+      phone_number_id,
+      phone_number,
+      access_token,
+      verify_token,
+      is_active: true,
+    };
+
+    // Add organization_id if user belongs to an organization
+    if (user && user.organization_id) {
+      configData.organization_id = user.organization_id;
+    }
+
     const configRows = await sbInsert(
       env,
       'whatsapp_configs',
-      [{
-        name,
-        phone_number_id,
-        phone_number,
-        access_token,
-        verify_token,
-        is_active: true,
-      }],
+      [configData],
       true
     );
 

@@ -1,16 +1,24 @@
-// GET /api/flows - List all flows
-// POST /api/flows - Create new flow
+// GET /api/flows - List all flows for user's organization
+// POST /api/flows - Create new flow in user's organization
 
 import { sbSelect, sbInsert, sbSelectOne } from '../../lib/supabase.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
+  const user = context.data?.user;
 
   try {
+    // Build filter based on user's organization
+    // Super admins can see all flows, others only see their org's flows
+    let filter = 'order=updated_at.desc';
+    if (user && user.role !== 'super_admin' && user.organization_id) {
+      filter = `organization_id=eq.${user.organization_id}&order=updated_at.desc`;
+    }
+
     const flows = await sbSelect(
       env,
       'flows',
-      'order=updated_at.desc',
+      filter,
       '*'
     );
 
@@ -42,23 +50,36 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
+  const user = context.data?.user;
 
   try {
     const body = await request.json();
     const { name, whatsapp_config_id, trigger_type, trigger_value, nodes, edges } = body;
 
-    // Create flow
+    // Create flow with organization and creator info
+    const flowData = {
+      name,
+      whatsapp_config_id: whatsapp_config_id || null,
+      trigger_type: trigger_type || 'keyword',
+      trigger_value: trigger_value || null,
+      is_active: false,
+      is_published: false,
+    };
+
+    // Add organization_id if user belongs to an organization
+    if (user && user.organization_id) {
+      flowData.organization_id = user.organization_id;
+    }
+
+    // Add created_by if user is authenticated
+    if (user && user.id) {
+      flowData.created_by = user.id;
+    }
+
     const flowRows = await sbInsert(
       env,
       'flows',
-      [{
-        name,
-        whatsapp_config_id: whatsapp_config_id || null,
-        trigger_type: trigger_type || 'keyword',
-        trigger_value: trigger_value || null,
-        is_active: false,
-        is_published: false,
-      }],
+      [flowData],
       true // returning
     );
 
