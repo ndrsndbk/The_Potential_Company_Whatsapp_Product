@@ -54,9 +54,11 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
+    console.log('[WEBHOOK] Received:', JSON.stringify(body).substring(0, 500));
 
     // Validate webhook payload
     if (body.object !== 'whatsapp_business_account') {
+      console.log('[WEBHOOK] Not a WhatsApp webhook');
       return new Response('Not a WhatsApp webhook', { status: 400 });
     }
 
@@ -66,6 +68,7 @@ export async function onRequestPost(context) {
 
     if (!value?.messages?.[0]) {
       // No message - might be status update
+      console.log('[WEBHOOK] Status update (no message)');
       return new Response('OK', { status: 200 });
     }
 
@@ -73,6 +76,7 @@ export async function onRequestPost(context) {
     const contact = value.contacts?.[0];
     const customerId = message.from;
     const messageId = message.id;
+    console.log('[WEBHOOK] Message from:', customerId, 'ID:', messageId, 'Type:', message.type);
 
     // Initialize engine
     const engine = new FlowEngine(env);
@@ -80,9 +84,10 @@ export async function onRequestPost(context) {
     // Load config
     const config = await engine.loadConfig(configId);
     if (!config) {
-      console.error('Config not found or inactive:', configId);
+      console.error('[WEBHOOK] Config not found or inactive:', configId);
       return new Response('Config not found', { status: 404 });
     }
+    console.log('[WEBHOOK] Config loaded:', config.name);
 
     // Check for duplicate message (idempotency)
     const existing = await sbSelectOne(
@@ -93,6 +98,7 @@ export async function onRequestPost(context) {
     );
 
     if (existing) {
+      console.log('[WEBHOOK] Duplicate message, skipping:', messageId);
       return new Response('Already processed', { status: 200 });
     }
 
@@ -122,17 +128,22 @@ export async function onRequestPost(context) {
 
     if (waitingExecution) {
       // Resume existing flow
+      console.log('[WEBHOOK] Resuming waiting execution:', waitingExecution.id);
       await engine.execute(customerId, messageContent);
     } else {
       // Find matching flow
-      const matchingFlow = await engine.findMatchingFlow(messageContent.text || '', configId);
+      const messageText = messageContent.text || '';
+      console.log('[WEBHOOK] Looking for flow matching:', messageText);
+      const matchingFlow = await engine.findMatchingFlow(messageText, configId);
 
       if (matchingFlow) {
         // Start new execution
+        console.log('[WEBHOOK] Found matching flow:', matchingFlow.name, 'ID:', matchingFlow.id);
         await engine.startExecution(customerId, configId, matchingFlow.id);
         await engine.execute(customerId, messageContent);
+      } else {
+        console.log('[WEBHOOK] No matching flow for:', messageText);
       }
-      // If no matching flow, do nothing (message ignored)
     }
 
     return new Response('OK', { status: 200 });
