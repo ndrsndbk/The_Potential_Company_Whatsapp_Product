@@ -1,7 +1,7 @@
 // Dynamic webhook handler per WhatsApp config
 // URL: /webhook/:configId
 
-import { createClient } from '@supabase/supabase-js';
+import { sbSelectOne, sbInsert } from '../lib/supabase.js';
 import { FlowEngine } from './_shared/engine.js';
 import { extractMessageContent, markAsRead } from './_shared/whatsapp.js';
 
@@ -21,24 +21,28 @@ export async function onRequestGet(context) {
     return new Response('Invalid mode', { status: 403 });
   }
 
-  // Get config to verify token
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+  try {
+    // Get config to verify token
+    const config = await sbSelectOne(
+      env,
+      'whatsapp_configs',
+      `id=eq.${configId}`,
+      'verify_token'
+    );
 
-  const { data: config, error } = await supabase
-    .from('whatsapp_configs')
-    .select('verify_token')
-    .eq('id', configId)
-    .single();
+    if (!config) {
+      return new Response('Config not found', { status: 404 });
+    }
 
-  if (error || !config) {
-    return new Response('Config not found', { status: 404 });
+    if (token !== config.verify_token) {
+      return new Response('Invalid verify token', { status: 403 });
+    }
+
+    return new Response(challenge, { status: 200 });
+  } catch (error) {
+    console.error('Webhook verification error:', error);
+    return new Response('Error', { status: 500 });
   }
-
-  if (token !== config.verify_token) {
-    return new Response('Invalid verify token', { status: 403 });
-  }
-
-  return new Response(challenge, { status: 200 });
 }
 
 /**
@@ -81,19 +85,24 @@ export async function onRequestPost(context) {
     }
 
     // Check for duplicate message (idempotency)
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
-    const { data: existing } = await supabase
-      .from('processed_messages')
-      .select('message_id')
-      .eq('message_id', messageId)
-      .single();
+    const existing = await sbSelectOne(
+      env,
+      'processed_messages',
+      `message_id=eq.${messageId}`,
+      'message_id'
+    );
 
     if (existing) {
       return new Response('Already processed', { status: 200 });
     }
 
     // Mark as processed
-    await supabase.from('processed_messages').insert({ message_id: messageId });
+    try {
+      await sbInsert(env, 'processed_messages', [{ message_id: messageId }]);
+    } catch (e) {
+      // Ignore duplicate key errors
+      console.log('Message already processed (concurrent):', messageId);
+    }
 
     // Mark message as read
     await markAsRead(config.access_token, config.phone_number_id, messageId);

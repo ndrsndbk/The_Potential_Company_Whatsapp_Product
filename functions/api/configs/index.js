@@ -1,31 +1,23 @@
 // GET /api/configs - List all WhatsApp configurations
 // POST /api/configs - Create new configuration
 
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseClient(env) {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
-}
+import { sbSelect, sbInsert } from '../../lib/supabase.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
 
   try {
-    const supabase = getSupabaseClient(env);
-
-    const { data: configs, error } = await supabase
-      .from('whatsapp_configs')
-      .select('id, name, phone_number_id, phone_number, is_active, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
+    const configs = await sbSelect(
+      env,
+      'whatsapp_configs',
+      'order=created_at.desc',
+      'id,name,phone_number_id,phone_number,is_active,created_at'
+    );
 
     return Response.json({ configs });
   } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    console.error('Error listing configs:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -33,9 +25,7 @@ export async function onRequestPost(context) {
   const { env, request } = context;
 
   try {
-    const supabase = getSupabaseClient(env);
     const body = await request.json();
-
     const { name, phone_number_id, phone_number, access_token, verify_token } = body;
 
     // Validate required fields
@@ -47,39 +37,43 @@ export async function onRequestPost(context) {
     }
 
     // Check max 2 configs
-    const { count, error: countError } = await supabase
-      .from('whatsapp_configs')
-      .select('*', { count: 'exact', head: true });
-
-    if (countError) throw countError;
-
-    if (count >= 2) {
+    const existing = await sbSelect(env, 'whatsapp_configs', '', 'id');
+    if (existing.length >= 2) {
       return Response.json(
         { error: 'Maximum of 2 WhatsApp configurations allowed' },
         { status: 400 }
       );
     }
 
-    const { data: config, error } = await supabase
-      .from('whatsapp_configs')
-      .insert({
+    const configRows = await sbInsert(
+      env,
+      'whatsapp_configs',
+      [{
         name,
         phone_number_id,
         phone_number,
         access_token,
         verify_token,
         is_active: true,
-      })
-      .select('id, name, phone_number_id, phone_number, is_active, created_at')
-      .single();
-
-    if (error) throw error;
-
-    return Response.json({ config }, { status: 201 });
-  } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
+      }],
+      true
     );
+
+    const config = configRows[0];
+
+    // Return without access_token for security
+    return Response.json({
+      config: {
+        id: config.id,
+        name: config.name,
+        phone_number_id: config.phone_number_id,
+        phone_number: config.phone_number,
+        is_active: config.is_active,
+        created_at: config.created_at,
+      }
+    }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating config:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }

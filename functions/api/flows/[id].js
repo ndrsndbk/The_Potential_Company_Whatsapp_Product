@@ -2,53 +2,35 @@
 // PUT /api/flows/:id - Update flow
 // DELETE /api/flows/:id - Delete flow
 
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseClient(env) {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
-}
+import { sbSelectOne, sbSelect, sbUpdate, sbDelete, sbInsert } from '../../lib/supabase.js';
 
 export async function onRequestGet(context) {
   const { env, params } = context;
   const flowId = params.id;
 
   try {
-    const supabase = getSupabaseClient(env);
-
     // Get flow
-    const { data: flow, error: flowError } = await supabase
-      .from('flows')
-      .select(`
-        *,
-        whatsapp_configs (
-          id,
-          name,
-          phone_number
-        )
-      `)
-      .eq('id', flowId)
-      .single();
-
-    if (flowError) throw flowError;
+    const flow = await sbSelectOne(env, 'flows', `id=eq.${flowId}`, '*');
     if (!flow) {
       return Response.json({ error: 'Flow not found' }, { status: 404 });
     }
 
-    // Get nodes
-    const { data: nodes, error: nodesError } = await supabase
-      .from('flow_nodes')
-      .select('*')
-      .eq('flow_id', flowId);
+    // Get whatsapp config if assigned
+    let whatsapp_configs = null;
+    if (flow.whatsapp_config_id) {
+      whatsapp_configs = await sbSelectOne(
+        env,
+        'whatsapp_configs',
+        `id=eq.${flow.whatsapp_config_id}`,
+        'id,name,phone_number'
+      );
+    }
 
-    if (nodesError) throw nodesError;
+    // Get nodes
+    const nodes = await sbSelect(env, 'flow_nodes', `flow_id=eq.${flowId}`, '*');
 
     // Get edges
-    const { data: edges, error: edgesError } = await supabase
-      .from('flow_edges')
-      .select('*')
-      .eq('flow_id', flowId);
-
-    if (edgesError) throw edgesError;
+    const edges = await sbSelect(env, 'flow_edges', `flow_id=eq.${flowId}`, '*');
 
     // Transform nodes to React Flow format
     const reactFlowNodes = nodes.map((node) => ({
@@ -71,15 +53,13 @@ export async function onRequestGet(context) {
     }));
 
     return Response.json({
-      flow,
+      flow: { ...flow, whatsapp_configs },
       nodes: reactFlowNodes,
       edges: reactFlowEdges,
     });
   } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    console.error('Error getting flow:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -88,9 +68,7 @@ export async function onRequestPut(context) {
   const flowId = params.id;
 
   try {
-    const supabase = getSupabaseClient(env);
     const body = await request.json();
-
     const { name, whatsapp_config_id, trigger_type, trigger_value, is_active, nodes, edges } = body;
 
     // Update flow metadata
@@ -101,19 +79,17 @@ export async function onRequestPut(context) {
     if (trigger_value !== undefined) updateData.trigger_value = trigger_value;
     if (is_active !== undefined) updateData.is_active = is_active;
 
-    const { data: flow, error: flowError } = await supabase
-      .from('flows')
-      .update(updateData)
-      .eq('id', flowId)
-      .select()
-      .single();
+    const flowRows = await sbUpdate(env, 'flows', `id=eq.${flowId}`, updateData, true);
+    const flow = flowRows?.[0];
 
-    if (flowError) throw flowError;
+    if (!flow) {
+      return Response.json({ error: 'Flow not found' }, { status: 404 });
+    }
 
     // Update nodes if provided
     if (nodes !== undefined) {
-      // Delete existing nodes
-      await supabase.from('flow_nodes').delete().eq('flow_id', flowId);
+      // Delete existing nodes (cascade will delete edges too)
+      await sbDelete(env, 'flow_nodes', `flow_id=eq.${flowId}`);
 
       // Insert new nodes
       if (nodes.length > 0) {
@@ -121,24 +97,20 @@ export async function onRequestPut(context) {
           id: node.id,
           flow_id: flowId,
           node_type: node.type,
-          label: node.data?.label,
+          label: node.data?.label || null,
           position_x: node.position?.x || 0,
           position_y: node.position?.y || 0,
           config: node.data?.config || {},
         }));
 
-        const { error: nodesError } = await supabase
-          .from('flow_nodes')
-          .insert(nodeInserts);
-
-        if (nodesError) throw nodesError;
+        await sbInsert(env, 'flow_nodes', nodeInserts);
       }
     }
 
     // Update edges if provided
     if (edges !== undefined) {
       // Delete existing edges
-      await supabase.from('flow_edges').delete().eq('flow_id', flowId);
+      await sbDelete(env, 'flow_edges', `flow_id=eq.${flowId}`);
 
       // Insert new edges
       if (edges.length > 0) {
@@ -150,20 +122,14 @@ export async function onRequestPut(context) {
           source_handle: edge.sourceHandle || 'default',
         }));
 
-        const { error: edgesError } = await supabase
-          .from('flow_edges')
-          .insert(edgeInserts);
-
-        if (edgesError) throw edgesError;
+        await sbInsert(env, 'flow_edges', edgeInserts);
       }
     }
 
     return Response.json({ flow });
   } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    console.error('Error updating flow:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -172,21 +138,10 @@ export async function onRequestDelete(context) {
   const flowId = params.id;
 
   try {
-    const supabase = getSupabaseClient(env);
-
-    // Delete flow (cascade will handle nodes and edges)
-    const { error } = await supabase
-      .from('flows')
-      .delete()
-      .eq('id', flowId);
-
-    if (error) throw error;
-
+    await sbDelete(env, 'flows', `id=eq.${flowId}`);
     return Response.json({ success: true });
   } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    console.error('Error deleting flow:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }

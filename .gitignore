@@ -1,3 +1,7 @@
+# Secrets and local config
+.dev.vars
+.wrangler/
+
 # Logs
 logs
 *.log

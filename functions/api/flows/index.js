@@ -1,34 +1,38 @@
 // GET /api/flows - List all flows
 // POST /api/flows - Create new flow
 
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseClient(env) {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
-}
+import { sbSelect, sbInsert, sbSelectOne } from '../../lib/supabase.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
 
   try {
-    const supabase = getSupabaseClient(env);
+    const flows = await sbSelect(
+      env,
+      'flows',
+      'order=updated_at.desc',
+      '*'
+    );
 
-    const { data: flows, error } = await supabase
-      .from('flows')
-      .select(`
-        *,
-        whatsapp_configs (
-          id,
-          name,
-          phone_number
-        )
-      `)
-      .order('updated_at', { ascending: false });
+    // Get whatsapp configs for each flow
+    const flowsWithConfigs = await Promise.all(
+      flows.map(async (flow) => {
+        if (flow.whatsapp_config_id) {
+          const config = await sbSelectOne(
+            env,
+            'whatsapp_configs',
+            `id=eq.${flow.whatsapp_config_id}`,
+            'id,name,phone_number'
+          );
+          return { ...flow, whatsapp_configs: config };
+        }
+        return { ...flow, whatsapp_configs: null };
+      })
+    );
 
-    if (error) throw error;
-
-    return Response.json({ flows });
+    return Response.json({ flows: flowsWithConfigs });
   } catch (error) {
+    console.error('Error listing flows:', error);
     return Response.json(
       { error: error.message },
       { status: 500 }
@@ -40,26 +44,25 @@ export async function onRequestPost(context) {
   const { env, request } = context;
 
   try {
-    const supabase = getSupabaseClient(env);
     const body = await request.json();
-
     const { name, whatsapp_config_id, trigger_type, trigger_value, nodes, edges } = body;
 
     // Create flow
-    const { data: flow, error: flowError } = await supabase
-      .from('flows')
-      .insert({
+    const flowRows = await sbInsert(
+      env,
+      'flows',
+      [{
         name,
-        whatsapp_config_id,
+        whatsapp_config_id: whatsapp_config_id || null,
         trigger_type: trigger_type || 'keyword',
-        trigger_value,
+        trigger_value: trigger_value || null,
         is_active: false,
         is_published: false,
-      })
-      .select()
-      .single();
+      }],
+      true // returning
+    );
 
-    if (flowError) throw flowError;
+    const flow = flowRows[0];
 
     // Create nodes if provided
     if (nodes && nodes.length > 0) {
@@ -67,17 +70,13 @@ export async function onRequestPost(context) {
         id: node.id,
         flow_id: flow.id,
         node_type: node.type,
-        label: node.data?.label,
+        label: node.data?.label || null,
         position_x: node.position?.x || 0,
         position_y: node.position?.y || 0,
         config: node.data?.config || {},
       }));
 
-      const { error: nodesError } = await supabase
-        .from('flow_nodes')
-        .insert(nodeInserts);
-
-      if (nodesError) throw nodesError;
+      await sbInsert(env, 'flow_nodes', nodeInserts);
     }
 
     // Create edges if provided
@@ -90,15 +89,12 @@ export async function onRequestPost(context) {
         source_handle: edge.sourceHandle || 'default',
       }));
 
-      const { error: edgesError } = await supabase
-        .from('flow_edges')
-        .insert(edgeInserts);
-
-      if (edgesError) throw edgesError;
+      await sbInsert(env, 'flow_edges', edgeInserts);
     }
 
     return Response.json({ flow }, { status: 201 });
   } catch (error) {
+    console.error('Error creating flow:', error);
     return Response.json(
       { error: error.message },
       { status: 500 }

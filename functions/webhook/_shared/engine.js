@@ -1,6 +1,6 @@
-// Flow Execution Engine
+// Flow Execution Engine using REST API
 
-import { createClient } from '@supabase/supabase-js';
+import { sbSelect, sbSelectOne, sbInsert, sbUpdate } from '../../lib/supabase.js';
 import * as wa from './whatsapp.js';
 import { interpolate, evaluateCondition, setNestedValue } from './variables.js';
 
@@ -9,7 +9,7 @@ import { interpolate, evaluateCondition, setNestedValue } from './variables.js';
  */
 export class FlowEngine {
   constructor(env) {
-    this.supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+    this.env = env;
     this.config = null;
     this.flow = null;
     this.nodes = [];
@@ -22,14 +22,14 @@ export class FlowEngine {
    * Load WhatsApp config by ID
    */
   async loadConfig(configId) {
-    const { data, error } = await this.supabase
-      .from('whatsapp_configs')
-      .select('*')
-      .eq('id', configId)
-      .eq('is_active', true)
-      .single();
+    const data = await sbSelectOne(
+      this.env,
+      'whatsapp_configs',
+      `id=eq.${configId}&is_active=eq.true`,
+      '*'
+    );
 
-    if (error || !data) return null;
+    if (!data) return null;
     this.config = data;
     return data;
   }
@@ -39,15 +39,14 @@ export class FlowEngine {
    */
   async findMatchingFlow(messageText, configId) {
     // Get all active, published flows for this config
-    const { data: flows, error } = await this.supabase
-      .from('flows')
-      .select('*')
-      .eq('whatsapp_config_id', configId)
-      .eq('is_active', true)
-      .eq('is_published', true)
-      .order('priority', { ascending: false });
+    const flows = await sbSelect(
+      this.env,
+      'flows',
+      `whatsapp_config_id=eq.${configId}&is_active=eq.true&is_published=eq.true&order=priority.desc`,
+      '*'
+    );
 
-    if (error || !flows) return null;
+    if (!flows || flows.length === 0) return null;
 
     for (const flow of flows) {
       if (flow.trigger_type === 'any_message') {
@@ -71,24 +70,13 @@ export class FlowEngine {
    * Load flow with nodes and edges
    */
   async loadFlow(flowId) {
-    const { data: flow, error: flowError } = await this.supabase
-      .from('flows')
-      .select('*')
-      .eq('id', flowId)
-      .single();
+    const flow = await sbSelectOne(this.env, 'flows', `id=eq.${flowId}`, '*');
 
-    if (flowError || !flow) return null;
+    if (!flow) return null;
     this.flow = flow;
 
-    const { data: nodes } = await this.supabase
-      .from('flow_nodes')
-      .select('*')
-      .eq('flow_id', flowId);
-
-    const { data: edges } = await this.supabase
-      .from('flow_edges')
-      .select('*')
-      .eq('flow_id', flowId);
+    const nodes = await sbSelect(this.env, 'flow_nodes', `flow_id=eq.${flowId}`, '*');
+    const edges = await sbSelect(this.env, 'flow_edges', `flow_id=eq.${flowId}`, '*');
 
     this.nodes = nodes || [];
     this.edges = edges || [];
@@ -100,18 +88,16 @@ export class FlowEngine {
    * Find existing waiting execution for customer
    */
   async findWaitingExecution(customerId, configId) {
-    const { data, error } = await this.supabase
-      .from('flow_executions')
-      .select('*')
-      .eq('customer_id', customerId)
-      .eq('whatsapp_config_id', configId)
-      .eq('status', 'waiting')
-      .order('started_at', { ascending: false })
-      .limit(1)
-      .single();
+    const executions = await sbSelect(
+      this.env,
+      'flow_executions',
+      `customer_id=eq.${customerId}&whatsapp_config_id=eq.${configId}&status=eq.waiting&order=started_at.desc&limit=1`,
+      '*'
+    );
 
-    if (error || !data) return null;
+    if (!executions || executions.length === 0) return null;
 
+    const data = executions[0];
     this.execution = data;
     this.variables = data.variables || {};
     await this.loadFlow(data.flow_id);
@@ -130,25 +116,24 @@ export class FlowEngine {
       throw new Error('Flow has no trigger node');
     }
 
-    const { data, error } = await this.supabase
-      .from('flow_executions')
-      .insert({
+    const rows = await sbInsert(
+      this.env,
+      'flow_executions',
+      [{
         flow_id: flowId,
         customer_id: customerId,
         whatsapp_config_id: configId,
         current_node_id: triggerNode.id,
         status: 'running',
         variables: {},
-      })
-      .select()
-      .single();
+      }],
+      true
+    );
 
-    if (error) throw error;
-
-    this.execution = data;
+    this.execution = rows[0];
     this.variables = {};
 
-    return data;
+    return this.execution;
   }
 
   /**
@@ -201,15 +186,17 @@ export class FlowEngine {
 
       if (result.wait) {
         // Pause execution, waiting for user input
-        await this.supabase
-          .from('flow_executions')
-          .update({
+        await sbUpdate(
+          this.env,
+          'flow_executions',
+          `id=eq.${this.execution.id}`,
+          {
             current_node_id: node.id,
             status: 'waiting',
             waiting_for: result.waitFor,
             variables: this.variables,
-          })
-          .eq('id', this.execution.id);
+          }
+        );
         return;
       }
 
@@ -417,25 +404,27 @@ export class FlowEngine {
    * Mark execution as complete
    */
   async completeExecution() {
-    await this.supabase
-      .from('flow_executions')
-      .update({
+    await sbUpdate(
+      this.env,
+      'flow_executions',
+      `id=eq.${this.execution.id}`,
+      {
         status: 'completed',
         completed_at: new Date().toISOString(),
         variables: this.variables,
-      })
-      .eq('id', this.execution.id);
+      }
+    );
   }
 
   /**
    * Log execution step
    */
   async logExecution(nodeId, action, data) {
-    await this.supabase.from('execution_logs').insert({
+    await sbInsert(this.env, 'execution_logs', [{
       execution_id: this.execution.id,
       node_id: nodeId,
       action,
       data,
-    });
+    }]);
   }
 }
