@@ -30,7 +30,7 @@ These variables are automatically available:
 
 1. Add a **Set Variable** node
 2. Enter variable name: `my_variable`
-3. Enter value: `some value` or `{{other_variable}}`
+3. Enter value: `some value` or <code v-pre>{{other_variable}}</code>
 
 ### From Wait for Reply
 
@@ -120,10 +120,10 @@ Use **Math Operation** node for calculations:
 
 | Operation | Expression | Result |
 |-----------|------------|--------|
-| Add | `{{a}} + {{b}}` | Sum |
-| Subtract | `{{a}} - {{b}}` | Difference |
-| Multiply | `{{a}} * {{b}}` | Product |
-| Divide | `{{a}} / {{b}}` | Quotient |
+| Add | <code v-pre>{{a}} + {{b}}</code> | Sum |
+| Subtract | <code v-pre>{{a}} - {{b}}</code> | Difference |
+| Multiply | <code v-pre>{{a}} * {{b}}</code> | Product |
+| Divide | <code v-pre>{{a}} / {{b}}</code> | Quotient |
 
 ## Best Practices
 

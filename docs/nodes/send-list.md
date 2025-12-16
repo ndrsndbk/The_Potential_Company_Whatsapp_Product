@@ -166,7 +166,7 @@ When user selects an item, the item ID is returned.
 Send List → Wait for Reply → Condition
 ```
 
-Check `{{last_reply}}` against item IDs:
+Check <code v-pre>{{last_reply}}</code> against item IDs:
 
 ```
 {{last_reply}} == "phones" → Show phones

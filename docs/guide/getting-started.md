@@ -125,7 +125,7 @@ Once deployed, create your first flow:
 1. Log in to the Flow Builder
 2. Click **New Flow**
 3. Set trigger type to "keyword" and value to "HELLO"
-4. Add a **Send Text** node with message: "Hi {{customer_name}}! Welcome!"
+4. Add a **Send Text** node with message: "Hi <span v-pre>{{customer_name}}</span>! Welcome!"
 5. Connect the Trigger to Send Text
 6. Click **Publish**
 7. Send "HELLO" to your WhatsApp number

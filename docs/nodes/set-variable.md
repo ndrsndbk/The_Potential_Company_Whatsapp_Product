@@ -168,7 +168,7 @@ Flow Start → Set var → Use var → End Flow
 
 Each conversation has its own variable space:
 
-- User A's `{{count}}` ≠ User B's `{{count}}`
+- User A's <code v-pre>{{count}}</code> ≠ User B's <code v-pre>{{count}}</code>
 - Variables don't persist between conversations
 
 ## Best Practices
@@ -238,7 +238,7 @@ user_timezone
 
 ### Expression Not Evaluated
 
-**Problem:** Value shows literal expression like "{{a}} + {{b}}"
+**Problem:** Value shows literal expression like "<span v-pre>{{a}}</span> + <span v-pre>{{b}}</span>"
 
 **Cause:** Referenced variables don't exist
 

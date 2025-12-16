@@ -39,7 +39,7 @@ Variables store data during flow execution:
 
 - **System Variables** - Auto-populated (`customer_name`, `customer_phone`)
 - **User Variables** - Set by nodes or user input
-- **Variable Syntax** - Use `{{variable_name}}` in messages
+- **Variable Syntax** - Use <code v-pre>{{variable_name}}</code> in messages
 
 ## How It Works
 

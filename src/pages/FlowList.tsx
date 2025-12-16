@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Settings, Workflow, RefreshCw, Trash2, Building2, Users, LogOut } from 'lucide-react';
+import { Plus, Settings, Workflow, RefreshCw, Trash2, Building2, Users, LogOut, BookOpen } from 'lucide-react';
 import { flowsApi, type Flow } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -84,9 +84,19 @@ export function FlowList() {
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </button>
+            <a
+              href="/docs/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg"
+              title="Documentation"
+            >
+              <BookOpen size={20} />
+            </a>
             <button
               onClick={() => navigate('/settings')}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              title="Settings"
             >
               <Settings size={20} />
             </button>

@@ -125,7 +125,7 @@ During execution, nodes can be:
 
 Most nodes can:
 
-- **Read variables**: Use `{{variable_name}}` in text fields
+- **Read variables**: Use <code v-pre>{{variable_name}}</code> in text fields
 - **Write variables**: Store results in specified variable name
 
 ## Best Practices

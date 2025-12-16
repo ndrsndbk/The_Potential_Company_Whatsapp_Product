@@ -28,14 +28,14 @@ Click the preview button to see how your message will appear in WhatsApp.
 
 ## Variable Substitution
 
-Use `{{variable_name}}` to insert dynamic content:
+Use <code v-pre>{{variable_name}}</code> to insert dynamic content:
 
 | Variable | Example Output |
 |----------|----------------|
-| `{{customer_name}}` | "John Doe" |
-| `{{customer_phone}}` | "+1234567890" |
-| `{{last_reply}}` | "HELLO" |
-| `{{custom_var}}` | Value you set |
+| <code v-pre>{{customer_name}}</code> | "John Doe" |
+| <code v-pre>{{customer_phone}}</code> | "+1234567890" |
+| <code v-pre>{{last_reply}}</code> | "HELLO" |
+| <code v-pre>{{custom_var}}</code> | Value you set |
 
 ## Examples
 
@@ -133,13 +133,13 @@ Step 1: Choose an option Step 2: Enter your details Step 3: Confirm
 Before publishing, verify:
 - Variables are spelled correctly
 - Variables have values when used
-- No orphan `{{` or `}}` brackets
+- No orphan <code v-pre>{{</code> or `}}` brackets
 
 ## Common Issues
 
 ### Variables Not Substituting
 
-**Problem:** Message shows `{{customer_name}}` literally
+**Problem:** Message shows <code v-pre>{{customer_name}}</code> literally
 
 **Causes:**
 1. Typo in variable name

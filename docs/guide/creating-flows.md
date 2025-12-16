@@ -127,8 +127,8 @@ Trigger → Send Buttons → Wait for Reply → Condition
 
 ### Use Variables
 
-- Store user responses: `{{last_reply}}`
-- Reference later: "You said: {{last_reply}}"
+- Store user responses: <code v-pre>{{last_reply}}</code>
+- Reference later: "You said: <span v-pre>{{last_reply}}</span>"
 - Build up context through the conversation
 
 ### Handle Errors
@@ -170,6 +170,6 @@ Trigger → Send Buttons → Wait for Reply → Condition
 
 ### Variables Not Substituting
 
-- Use double curly braces: `{{variable_name}}`
+- Use double curly braces: <code v-pre>{{variable_name}}</code>
 - Check variable was set before being used
 - Variable names are case-sensitive

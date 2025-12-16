@@ -26,28 +26,28 @@ The expression to evaluate:
 
 | Operator | Meaning | Example |
 |----------|---------|---------|
-| `==` | Equal to | `{{status}} == "active"` |
-| `!=` | Not equal to | `{{status}} != "cancelled"` |
-| `>` | Greater than | `{{count}} > 10` |
-| `<` | Less than | `{{count}} < 5` |
-| `>=` | Greater than or equal | `{{age}} >= 18` |
-| `<=` | Less than or equal | `{{score}} <= 100` |
+| `==` | Equal to | <code v-pre>{{status}} == "active"</code> |
+| `!=` | Not equal to | <code v-pre>{{status}} != "cancelled"</code> |
+| `>` | Greater than | <code v-pre>{{count}} > 10</code> |
+| `<` | Less than | <code v-pre>{{count}} < 5</code> |
+| `>=` | Greater than or equal | <code v-pre>{{age}} >= 18</code> |
+| `<=` | Less than or equal | <code v-pre>{{score}} <= 100</code> |
 
 ### String Operators
 
 | Operator | Meaning | Example |
 |----------|---------|---------|
-| `contains` | String contains | `{{reply}} contains "help"` |
-| `startsWith` | Starts with | `{{reply}} startsWith "order"` |
-| `endsWith` | Ends with | `{{email}} endsWith "@gmail.com"` |
+| `contains` | String contains | <code v-pre>{{reply}} contains "help"</code> |
+| `startsWith` | Starts with | <code v-pre>{{reply}} startsWith "order"</code> |
+| `endsWith` | Ends with | <code v-pre>{{email}} endsWith "@gmail.com"</code> |
 
 ### Logical Operators
 
 | Operator | Meaning | Example |
 |----------|---------|---------|
-| `&&` | AND | `{{a}} > 0 && {{b}} > 0` |
-| `\|\|` | OR | `{{status}} == "yes" \|\| {{status}} == "y"` |
-| `!` | NOT | `!{{is_subscribed}}` |
+| `&&` | AND | <code v-pre>{{a}} > 0 && <span v-pre>{{b}}</span> > 0</code> |
+| `\|\|` | OR | <code v-pre>{{status}} == "yes" \|\| <span v-pre>{{status}}</span> == "y"</code> |
+| `!` | NOT | <code v-pre>!{{is_subscribed}}</code> |
 
 ## Examples
 

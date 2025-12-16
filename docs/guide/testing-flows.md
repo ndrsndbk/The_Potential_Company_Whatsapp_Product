@@ -96,7 +96,7 @@ For flows with loops:
 ### Message Content
 
 - [ ] No typos
-- [ ] Variables not showing as `{{variable}}`
+- [ ] Variables not showing as <code v-pre>{{variable}}</code>
 - [ ] Tone is appropriate
 - [ ] Links work (if any)
 - [ ] Phone numbers formatted correctly
@@ -147,7 +147,7 @@ After simulator testing, test on real WhatsApp:
 
 1. Check variable name spelling
 2. Ensure variable is set before use
-3. Check for typos in `{{brackets}}`
+3. Check for typos in <code v-pre>{{brackets}}</code>
 4. Use debug Send Text to inspect values
 
 ### API Calls Failing

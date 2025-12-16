@@ -3,12 +3,27 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'WhatsApp Flow Builder',
   description: 'Documentation for the WhatsApp Flow Builder - Create automated conversation flows for WhatsApp Business',
+  base: '/docs/',
+  ignoreDeadLinks: true,
+
+  markdown: {
+    config: (md) => {
+      // Escape {{ in markdown to prevent Vue interpolation
+      const defaultRender = md.renderer.rules.text || ((tokens, idx) => tokens[idx].content)
+      md.renderer.rules.text = (tokens, idx, options, env, self) => {
+        const content = tokens[idx].content
+        // Replace {{ with escaped version
+        tokens[idx].content = content.replace(/\{\{/g, '<span v-pre>{{</span>').replace(/\}\}/g, '<span v-pre>}}</span>')
+        return defaultRender(tokens, idx, options, env, self)
+      }
+    }
+  },
 
   head: [
-    ['link', { rel: 'icon', href: '/logo.svg' }],
+    ['link', { rel: 'icon', href: '/docs/logo.svg' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
-    ['link', { href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
+    ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap', rel: 'stylesheet' }],
   ],
 
   themeConfig: {
