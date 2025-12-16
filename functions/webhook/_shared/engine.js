@@ -109,12 +109,16 @@ export class FlowEngine {
    * Start new execution
    */
   async startExecution(customerId, configId, flowId) {
+    console.log('[ENGINE] Starting execution for flow:', flowId);
     await this.loadFlow(flowId);
+    console.log('[ENGINE] Loaded flow, nodes:', this.nodes.length, 'edges:', this.edges.length);
 
     const triggerNode = this.nodes.find((n) => n.node_type === 'trigger');
     if (!triggerNode) {
+      console.error('[ENGINE] Flow has no trigger node!');
       throw new Error('Flow has no trigger node');
     }
+    console.log('[ENGINE] Trigger node found:', triggerNode.id);
 
     const rows = await sbInsert(
       this.env,
@@ -132,6 +136,7 @@ export class FlowEngine {
 
     this.execution = rows[0];
     this.variables = {};
+    console.log('[ENGINE] Execution created:', this.execution?.id);
 
     return this.execution;
   }
@@ -140,6 +145,8 @@ export class FlowEngine {
    * Execute flow from current node
    */
   async execute(customerId, messageContent) {
+    console.log('[ENGINE] Execute called, customerId:', customerId);
+
     // Store incoming message in variables
     this.variables.last_message = messageContent.text;
     this.variables.last_message_type = messageContent.type;
@@ -175,11 +182,17 @@ export class FlowEngine {
     }
 
     // Execute nodes sequentially
+    console.log('[ENGINE] Starting node execution loop, first node:', currentNodeId);
     while (currentNodeId) {
       const node = this.nodes.find((n) => n.id === currentNodeId);
-      if (!node) break;
+      if (!node) {
+        console.log('[ENGINE] Node not found:', currentNodeId);
+        break;
+      }
 
+      console.log('[ENGINE] Executing node:', node.node_type, node.id);
       const result = await this.executeNode(node, customerId);
+      console.log('[ENGINE] Node result:', JSON.stringify(result));
 
       // Log execution
       await this.logExecution(node.id, node.node_type, result);
@@ -236,7 +249,13 @@ export class FlowEngine {
 
       case 'sendText': {
         const message = interpolate(config.message || '', this.variables);
-        await wa.sendText(this.config.access_token, this.config.phone_number_id, customerId, message);
+        console.log('[ENGINE] Sending text:', message.substring(0, 100), 'to:', customerId);
+        try {
+          await wa.sendText(this.config.access_token, this.config.phone_number_id, customerId, message);
+          console.log('[ENGINE] Text sent successfully');
+        } catch (err) {
+          console.error('[ENGINE] Failed to send text:', err.message);
+        }
         return { success: true };
       }
 
