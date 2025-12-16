@@ -79,6 +79,43 @@ const getDefaultConfig = (type: NodeType): NodeConfig => {
       return { loopType: 'count', maxIterations: 10 };
     case 'end':
       return { endType: 'complete' };
+    // New send message nodes
+    case 'sendTextEnhanced':
+      return { bodyText: 'Hello!', headerText: '', footerText: '' };
+    case 'sendVideo':
+      return { videoUrl: '', caption: '' };
+    case 'sendAudio':
+      return { audioUrl: '' };
+    case 'sendDocument':
+      return { documentUrl: '', filename: '', caption: '' };
+    case 'sendLocation':
+      return { latitude: '', longitude: '', name: '', address: '' };
+    case 'sendContact':
+      return { contacts: [{ name: '', phone: '' }] };
+    case 'sendSticker':
+      return { stickerUrl: '' };
+    // User data nodes
+    case 'getCustomerPhone':
+      return { variableName: 'phone', format: 'e164' };
+    case 'getCustomerName':
+      return { variableName: 'name' };
+    case 'getCustomerCountry':
+      return { variableName: 'country' };
+    case 'getMessageTimestamp':
+      return { variableName: 'timestamp' };
+    // Utility nodes
+    case 'formatPhoneNumber':
+      return { sourceVariable: 'customer_phone', variableName: 'formatted_phone', format: 'e164' };
+    case 'randomChoice':
+      return { choices: ['a', 'b'], variableName: 'choice' };
+    case 'dateTime':
+      return { variableName: 'datetime', operation: 'now', format: 'iso' };
+    case 'mathOperation':
+      return { variableName: 'result', operation: 'add', valueA: '0', valueB: '0' };
+    case 'textOperation':
+      return { variableName: 'result', operation: 'uppercase', text: '' };
+    case 'markAsRead':
+      return {};
     default:
       return {} as NodeConfig;
   }
@@ -98,6 +135,26 @@ const getNodeLabel = (type: NodeType): string => {
     delay: 'Delay',
     loop: 'Loop',
     end: 'End',
+    // New send message nodes
+    sendTextEnhanced: 'Text + Header/Footer',
+    sendVideo: 'Send Video',
+    sendAudio: 'Send Audio',
+    sendDocument: 'Send Document',
+    sendLocation: 'Send Location',
+    sendContact: 'Send Contact',
+    sendSticker: 'Send Sticker',
+    // User data nodes
+    getCustomerPhone: 'Get Phone',
+    getCustomerName: 'Get Name',
+    getCustomerCountry: 'Get Country',
+    getMessageTimestamp: 'Get Timestamp',
+    // Utility nodes
+    formatPhoneNumber: 'Format Phone',
+    randomChoice: 'Random Choice',
+    dateTime: 'Date/Time',
+    mathOperation: 'Math',
+    textOperation: 'Text Transform',
+    markAsRead: 'Mark as Read',
   };
   return labels[type];
 };

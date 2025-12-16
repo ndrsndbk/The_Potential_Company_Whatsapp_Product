@@ -1,5 +1,5 @@
 import { useFlowStore } from '@/stores/flowStore';
-import { X } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import type {
   FlowNodeData,
   TriggerConfig,
@@ -10,6 +10,22 @@ import type {
   ConditionConfig,
   DelayConfig,
   ApiCallConfig,
+  SendTextEnhancedConfig,
+  SendVideoConfig,
+  SendAudioConfig,
+  SendDocumentConfig,
+  SendLocationConfig,
+  SendContactConfig,
+  SendStickerConfig,
+  GetCustomerPhoneConfig,
+  GetCustomerNameConfig,
+  GetCustomerCountryConfig,
+  GetMessageTimestampConfig,
+  FormatPhoneNumberConfig,
+  RandomChoiceConfig,
+  DateTimeConfig,
+  MathOperationConfig,
+  TextOperationConfig,
 } from '@/types/flow';
 
 export function PropertyPanel() {
@@ -108,6 +124,110 @@ export function PropertyPanel() {
               config={data.config as ApiCallConfig}
               onChange={(c) => updateNodeConfig(selectedNode.id, c)}
             />
+          )}
+          {/* New send message nodes */}
+          {data.nodeType === 'sendTextEnhanced' && (
+            <SendTextEnhancedConfigForm
+              config={data.config as SendTextEnhancedConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendVideo' && (
+            <SendVideoConfigForm
+              config={data.config as SendVideoConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendAudio' && (
+            <SendAudioConfigForm
+              config={data.config as SendAudioConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendDocument' && (
+            <SendDocumentConfigForm
+              config={data.config as SendDocumentConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendLocation' && (
+            <SendLocationConfigForm
+              config={data.config as SendLocationConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendContact' && (
+            <SendContactConfigForm
+              config={data.config as SendContactConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'sendSticker' && (
+            <SendStickerConfigForm
+              config={data.config as SendStickerConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {/* User data nodes */}
+          {data.nodeType === 'getCustomerPhone' && (
+            <GetCustomerPhoneConfigForm
+              config={data.config as GetCustomerPhoneConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'getCustomerName' && (
+            <GetCustomerNameConfigForm
+              config={data.config as GetCustomerNameConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'getCustomerCountry' && (
+            <GetCustomerCountryConfigForm
+              config={data.config as GetCustomerCountryConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'getMessageTimestamp' && (
+            <GetMessageTimestampConfigForm
+              config={data.config as GetMessageTimestampConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {/* Utility nodes */}
+          {data.nodeType === 'formatPhoneNumber' && (
+            <FormatPhoneNumberConfigForm
+              config={data.config as FormatPhoneNumberConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'randomChoice' && (
+            <RandomChoiceConfigForm
+              config={data.config as RandomChoiceConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'dateTime' && (
+            <DateTimeConfigForm
+              config={data.config as DateTimeConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'mathOperation' && (
+            <MathOperationConfigForm
+              config={data.config as MathOperationConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'textOperation' && (
+            <TextOperationConfigForm
+              config={data.config as TextOperationConfig}
+              onChange={(c) => updateNodeConfig(selectedNode.id, c)}
+            />
+          )}
+          {data.nodeType === 'markAsRead' && (
+            <div className="text-sm text-gray-500">
+              This node marks the last received message as read. No configuration needed.
+            </div>
           )}
         </div>
 
@@ -541,6 +661,729 @@ function ApiCallConfigForm({
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
+    </>
+  );
+}
+
+// New send message node forms
+function SendTextEnhancedConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendTextEnhancedConfig;
+  onChange: (c: Partial<SendTextEnhancedConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Header (optional)</label>
+        <input
+          type="text"
+          value={config.headerText || ''}
+          onChange={(e) => onChange({ headerText: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Bold header text"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Body Text</label>
+        <textarea
+          value={config.bodyText || ''}
+          onChange={(e) => onChange({ bodyText: e.target.value })}
+          rows={4}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Main message content..."
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Footer (optional)</label>
+        <input
+          type="text"
+          value={config.footerText || ''}
+          onChange={(e) => onChange({ footerText: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Italic footer text"
+        />
+      </div>
+    </>
+  );
+}
+
+function SendVideoConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendVideoConfig;
+  onChange: (c: Partial<SendVideoConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Video URL</label>
+        <input
+          type="url"
+          value={config.videoUrl || ''}
+          onChange={(e) => onChange({ videoUrl: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="https://example.com/video.mp4"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
+        <input
+          type="text"
+          value={config.caption || ''}
+          onChange={(e) => onChange({ caption: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </>
+  );
+}
+
+function SendAudioConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendAudioConfig;
+  onChange: (c: Partial<SendAudioConfig>) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Audio URL</label>
+      <input
+        type="url"
+        value={config.audioUrl || ''}
+        onChange={(e) => onChange({ audioUrl: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="https://example.com/audio.mp3"
+      />
+    </div>
+  );
+}
+
+function SendDocumentConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendDocumentConfig;
+  onChange: (c: Partial<SendDocumentConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Document URL</label>
+        <input
+          type="url"
+          value={config.documentUrl || ''}
+          onChange={(e) => onChange({ documentUrl: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="https://example.com/document.pdf"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Filename (optional)</label>
+        <input
+          type="text"
+          value={config.filename || ''}
+          onChange={(e) => onChange({ filename: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="report.pdf"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
+        <input
+          type="text"
+          value={config.caption || ''}
+          onChange={(e) => onChange({ caption: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </>
+  );
+}
+
+function SendLocationConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendLocationConfig;
+  onChange: (c: Partial<SendLocationConfig>) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+          <input
+            type="text"
+            value={config.latitude || ''}
+            onChange={(e) => onChange({ latitude: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="37.7749"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+          <input
+            type="text"
+            value={config.longitude || ''}
+            onChange={(e) => onChange({ longitude: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="-122.4194"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Location Name (optional)</label>
+        <input
+          type="text"
+          value={config.name || ''}
+          onChange={(e) => onChange({ name: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Our Office"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Address (optional)</label>
+        <input
+          type="text"
+          value={config.address || ''}
+          onChange={(e) => onChange({ address: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="123 Main St, City"
+        />
+      </div>
+    </>
+  );
+}
+
+function SendContactConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendContactConfig;
+  onChange: (c: Partial<SendContactConfig>) => void;
+}) {
+  const addContact = () => {
+    onChange({ contacts: [...(config.contacts || []), { name: '', phone: '' }] });
+  };
+
+  const updateContact = (index: number, field: string, value: string) => {
+    const newContacts = [...(config.contacts || [])];
+    newContacts[index] = { ...newContacts[index], [field]: value };
+    onChange({ contacts: newContacts });
+  };
+
+  const removeContact = (index: number) => {
+    onChange({ contacts: config.contacts?.filter((_, i) => i !== index) || [] });
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Contacts</label>
+      {config.contacts?.map((contact, i) => (
+        <div key={i} className="mb-3 p-3 bg-white border rounded-md space-y-2">
+          <input
+            type="text"
+            value={contact.name}
+            onChange={(e) => updateContact(i, 'name', e.target.value)}
+            placeholder="Full Name"
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+          />
+          <input
+            type="text"
+            value={contact.phone || ''}
+            onChange={(e) => updateContact(i, 'phone', e.target.value)}
+            placeholder="Phone (+1234567890)"
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+          />
+          <input
+            type="email"
+            value={contact.email || ''}
+            onChange={(e) => updateContact(i, 'email', e.target.value)}
+            placeholder="Email (optional)"
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+          />
+          <button onClick={() => removeContact(i)} className="text-red-500 text-sm flex items-center gap-1">
+            <Trash2 size={14} /> Remove
+          </button>
+        </div>
+      ))}
+      <button onClick={addContact} className="text-sm text-blue-600 flex items-center gap-1">
+        <Plus size={14} /> Add Contact
+      </button>
+    </div>
+  );
+}
+
+function SendStickerConfigForm({
+  config,
+  onChange,
+}: {
+  config: SendStickerConfig;
+  onChange: (c: Partial<SendStickerConfig>) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Sticker URL</label>
+      <input
+        type="url"
+        value={config.stickerUrl || ''}
+        onChange={(e) => onChange({ stickerUrl: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="https://example.com/sticker.webp"
+      />
+      <p className="mt-1 text-xs text-gray-500">Must be .webp format (512x512 static or 512x512 animated)</p>
+    </div>
+  );
+}
+
+// User data node forms
+function GetCustomerPhoneConfigForm({
+  config,
+  onChange,
+}: {
+  config: GetCustomerPhoneConfig;
+  onChange: (c: Partial<GetCustomerPhoneConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="customer_phone"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+        <select
+          value={config.format || 'e164'}
+          onChange={(e) => onChange({ format: e.target.value as GetCustomerPhoneConfig['format'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="e164">E.164 (+14155551234)</option>
+          <option value="local">Local (4155551234)</option>
+          <option value="international">International (+1 415 555 1234)</option>
+        </select>
+      </div>
+    </>
+  );
+}
+
+function GetCustomerNameConfigForm({
+  config,
+  onChange,
+}: {
+  config: GetCustomerNameConfig;
+  onChange: (c: Partial<GetCustomerNameConfig>) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+      <input
+        type="text"
+        value={config.variableName || ''}
+        onChange={(e) => onChange({ variableName: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="customer_name"
+      />
+    </div>
+  );
+}
+
+function GetCustomerCountryConfigForm({
+  config,
+  onChange,
+}: {
+  config: GetCustomerCountryConfig;
+  onChange: (c: Partial<GetCustomerCountryConfig>) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+      <input
+        type="text"
+        value={config.variableName || ''}
+        onChange={(e) => onChange({ variableName: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="customer_country"
+      />
+      <p className="mt-1 text-xs text-gray-500">Returns ISO country code (e.g., US, GB, IN)</p>
+    </div>
+  );
+}
+
+function GetMessageTimestampConfigForm({
+  config,
+  onChange,
+}: {
+  config: GetMessageTimestampConfig;
+  onChange: (c: Partial<GetMessageTimestampConfig>) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+      <input
+        type="text"
+        value={config.variableName || ''}
+        onChange={(e) => onChange({ variableName: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="message_timestamp"
+      />
+    </div>
+  );
+}
+
+// Utility node forms
+function FormatPhoneNumberConfigForm({
+  config,
+  onChange,
+}: {
+  config: FormatPhoneNumberConfig;
+  onChange: (c: Partial<FormatPhoneNumberConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Source Variable</label>
+        <input
+          type="text"
+          value={config.sourceVariable || ''}
+          onChange={(e) => onChange({ sourceVariable: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="customer_phone"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="formatted_phone"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+        <select
+          value={config.format || 'e164'}
+          onChange={(e) => onChange({ format: e.target.value as FormatPhoneNumberConfig['format'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="e164">E.164 (+14155551234)</option>
+          <option value="local">Local (4155551234)</option>
+          <option value="international">International (+1 415 555 1234)</option>
+        </select>
+      </div>
+    </>
+  );
+}
+
+function RandomChoiceConfigForm({
+  config,
+  onChange,
+}: {
+  config: RandomChoiceConfig;
+  onChange: (c: Partial<RandomChoiceConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated)</label>
+        <input
+          type="text"
+          value={config.choices?.join(', ') || ''}
+          onChange={(e) => onChange({ choices: e.target.value.split(',').map((c) => c.trim()) })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="a, b, c"
+        />
+        <p className="mt-1 text-xs text-gray-500">Each choice creates an output handle for branching</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save Choice to Variable (optional)</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="random_choice"
+        />
+      </div>
+    </>
+  );
+}
+
+function DateTimeConfigForm({
+  config,
+  onChange,
+}: {
+  config: DateTimeConfig;
+  onChange: (c: Partial<DateTimeConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="current_date"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Operation</label>
+        <select
+          value={config.operation || 'now'}
+          onChange={(e) => onChange({ operation: e.target.value as DateTimeConfig['operation'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="now">Current Date/Time</option>
+          <option value="today">Today (midnight)</option>
+          <option value="addDays">Add Days</option>
+          <option value="addHours">Add Hours</option>
+        </select>
+      </div>
+      {config.operation === 'addDays' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Days to Add</label>
+          <input
+            type="number"
+            value={config.days || 0}
+            onChange={(e) => onChange({ days: Number(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
+      {config.operation === 'addHours' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Hours to Add</label>
+          <input
+            type="number"
+            value={config.hours || 0}
+            onChange={(e) => onChange({ hours: Number(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Output Format</label>
+        <select
+          value={config.format || 'iso'}
+          onChange={(e) => onChange({ format: e.target.value as DateTimeConfig['format'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="iso">ISO 8601</option>
+          <option value="date">Date only (YYYY-MM-DD)</option>
+          <option value="time">Time only (HH:MM:SS)</option>
+          <option value="timestamp">Unix timestamp</option>
+          <option value="readable">Human readable</option>
+        </select>
+      </div>
+    </>
+  );
+}
+
+function MathOperationConfigForm({
+  config,
+  onChange,
+}: {
+  config: MathOperationConfig;
+  onChange: (c: Partial<MathOperationConfig>) => void;
+}) {
+  const needsTwoValues = ['add', 'subtract', 'multiply', 'divide', 'modulo', 'min', 'max'].includes(config.operation || 'add');
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="result"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Operation</label>
+        <select
+          value={config.operation || 'add'}
+          onChange={(e) => onChange({ operation: e.target.value as MathOperationConfig['operation'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="add">Add (+)</option>
+          <option value="subtract">Subtract (-)</option>
+          <option value="multiply">Multiply (*)</option>
+          <option value="divide">Divide (/)</option>
+          <option value="modulo">Modulo (%)</option>
+          <option value="round">Round</option>
+          <option value="floor">Floor</option>
+          <option value="ceil">Ceiling</option>
+          <option value="abs">Absolute Value</option>
+          <option value="min">Minimum</option>
+          <option value="max">Maximum</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Value A</label>
+        <input
+          type="text"
+          value={config.valueA || ''}
+          onChange={(e) => onChange({ valueA: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="10 or {{variable}}"
+        />
+      </div>
+      {needsTwoValues && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Value B</label>
+          <input
+            type="text"
+            value={config.valueB || ''}
+            onChange={(e) => onChange({ valueB: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="5 or {{variable}}"
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+function TextOperationConfigForm({
+  config,
+  onChange,
+}: {
+  config: TextOperationConfig;
+  onChange: (c: Partial<TextOperationConfig>) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Save to Variable</label>
+        <input
+          type="text"
+          value={config.variableName || ''}
+          onChange={(e) => onChange({ variableName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="result"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Operation</label>
+        <select
+          value={config.operation || 'uppercase'}
+          onChange={(e) => onChange({ operation: e.target.value as TextOperationConfig['operation'] })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="uppercase">UPPERCASE</option>
+          <option value="lowercase">lowercase</option>
+          <option value="capitalize">Capitalize</option>
+          <option value="trim">Trim whitespace</option>
+          <option value="length">Get length</option>
+          <option value="substring">Substring</option>
+          <option value="replace">Replace</option>
+          <option value="split">Split to array</option>
+          <option value="join">Join array</option>
+          <option value="contains">Contains (true/false)</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Input Text</label>
+        <input
+          type="text"
+          value={config.text || ''}
+          onChange={(e) => onChange({ text: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="{{variable}} or static text"
+        />
+      </div>
+      {config.operation === 'substring' && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
+            <input
+              type="number"
+              value={config.start || 0}
+              onChange={(e) => onChange({ start: Number(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End</label>
+            <input
+              type="number"
+              value={config.end || 0}
+              onChange={(e) => onChange({ end: Number(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      )}
+      {config.operation === 'replace' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input
+              type="text"
+              value={config.search || ''}
+              onChange={(e) => onChange({ search: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Replace With</label>
+            <input
+              type="text"
+              value={config.replaceWith || ''}
+              onChange={(e) => onChange({ replaceWith: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </>
+      )}
+      {(config.operation === 'split' || config.operation === 'join') && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Delimiter</label>
+          <input
+            type="text"
+            value={config.delimiter || ','}
+            onChange={(e) => onChange({ delimiter: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
+      {config.operation === 'join' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Array Variable</label>
+          <input
+            type="text"
+            value={config.arrayVariable || ''}
+            onChange={(e) => onChange({ arrayVariable: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
+      {config.operation === 'contains' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Search For</label>
+          <input
+            type="text"
+            value={config.search || ''}
+            onChange={(e) => onChange({ search: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
     </>
   );
 }

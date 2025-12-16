@@ -395,6 +395,259 @@ export class FlowEngine {
       case 'end':
         return { end: true };
 
+      // New send message nodes
+      case 'sendTextEnhanced': {
+        const bodyText = interpolate(config.bodyText || config.message || '', this.variables);
+        const headerText = config.headerText ? interpolate(config.headerText, this.variables) : null;
+        const footerText = config.footerText ? interpolate(config.footerText, this.variables) : null;
+        await wa.sendTextEnhanced(this.config.access_token, this.config.phone_number_id, customerId, bodyText, headerText, footerText);
+        return { success: true };
+      }
+
+      case 'sendVideo': {
+        const videoUrl = interpolate(config.videoUrl || '', this.variables);
+        const caption = config.caption ? interpolate(config.caption, this.variables) : null;
+        await wa.sendVideo(this.config.access_token, this.config.phone_number_id, customerId, videoUrl, caption);
+        return { success: true };
+      }
+
+      case 'sendAudio': {
+        const audioUrl = interpolate(config.audioUrl || '', this.variables);
+        await wa.sendAudio(this.config.access_token, this.config.phone_number_id, customerId, audioUrl);
+        return { success: true };
+      }
+
+      case 'sendDocument': {
+        const documentUrl = interpolate(config.documentUrl || '', this.variables);
+        const filename = config.filename ? interpolate(config.filename, this.variables) : null;
+        const caption = config.caption ? interpolate(config.caption, this.variables) : null;
+        await wa.sendDocument(this.config.access_token, this.config.phone_number_id, customerId, documentUrl, filename, caption);
+        return { success: true };
+      }
+
+      case 'sendLocation': {
+        const latitude = interpolate(config.latitude || '0', this.variables);
+        const longitude = interpolate(config.longitude || '0', this.variables);
+        const name = config.name ? interpolate(config.name, this.variables) : null;
+        const address = config.address ? interpolate(config.address, this.variables) : null;
+        await wa.sendLocation(this.config.access_token, this.config.phone_number_id, customerId, latitude, longitude, name, address);
+        return { success: true };
+      }
+
+      case 'sendContact': {
+        const contacts = (config.contacts || []).map((c) => ({
+          name: interpolate(c.name || '', this.variables),
+          firstName: c.firstName ? interpolate(c.firstName, this.variables) : null,
+          lastName: c.lastName ? interpolate(c.lastName, this.variables) : null,
+          phone: c.phone ? interpolate(c.phone, this.variables) : null,
+          email: c.email ? interpolate(c.email, this.variables) : null,
+        }));
+        await wa.sendContact(this.config.access_token, this.config.phone_number_id, customerId, contacts);
+        return { success: true };
+      }
+
+      case 'sendSticker': {
+        const stickerUrl = interpolate(config.stickerUrl || '', this.variables);
+        await wa.sendSticker(this.config.access_token, this.config.phone_number_id, customerId, stickerUrl);
+        return { success: true };
+      }
+
+      // User data nodes
+      case 'getCustomerPhone': {
+        const varName = config.variableName || 'customer_phone';
+        const format = config.format || 'e164';
+        const phone = this.variables.customer_phone || customerId;
+        setNestedValue(this.variables, varName, wa.formatPhoneNumber(phone, format));
+        return { success: true };
+      }
+
+      case 'getCustomerName': {
+        const varName = config.variableName || 'customer_name';
+        setNestedValue(this.variables, varName, this.variables.customer_name || '');
+        return { success: true };
+      }
+
+      case 'getCustomerCountry': {
+        const varName = config.variableName || 'customer_country';
+        const phone = this.variables.customer_phone || customerId;
+        setNestedValue(this.variables, varName, wa.getCountryFromPhone(phone));
+        return { success: true };
+      }
+
+      case 'getMessageTimestamp': {
+        const varName = config.variableName || 'message_timestamp';
+        setNestedValue(this.variables, varName, new Date().toISOString());
+        return { success: true };
+      }
+
+      // Utility nodes
+      case 'formatPhoneNumber': {
+        const sourceVar = config.sourceVariable || 'customer_phone';
+        const targetVar = config.variableName || 'formatted_phone';
+        const format = config.format || 'e164';
+        const phone = this.variables[sourceVar] || '';
+        setNestedValue(this.variables, targetVar, wa.formatPhoneNumber(phone, format));
+        return { success: true };
+      }
+
+      case 'randomChoice': {
+        const choices = config.choices || ['a', 'b'];
+        const randomIndex = Math.floor(Math.random() * choices.length);
+        const chosenHandle = choices[randomIndex];
+        if (config.variableName) {
+          setNestedValue(this.variables, config.variableName, chosenHandle);
+        }
+        return { success: true, outputHandle: chosenHandle };
+      }
+
+      case 'dateTime': {
+        const varName = config.variableName || 'datetime';
+        const operation = config.operation || 'now';
+        const format = config.format || 'iso';
+        let result;
+
+        const now = new Date();
+        switch (operation) {
+          case 'now':
+            result = now;
+            break;
+          case 'today':
+            result = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'addDays':
+            result = new Date(now.getTime() + (config.days || 0) * 24 * 60 * 60 * 1000);
+            break;
+          case 'addHours':
+            result = new Date(now.getTime() + (config.hours || 0) * 60 * 60 * 1000);
+            break;
+          default:
+            result = now;
+        }
+
+        switch (format) {
+          case 'iso':
+            setNestedValue(this.variables, varName, result.toISOString());
+            break;
+          case 'date':
+            setNestedValue(this.variables, varName, result.toISOString().split('T')[0]);
+            break;
+          case 'time':
+            setNestedValue(this.variables, varName, result.toISOString().split('T')[1].split('.')[0]);
+            break;
+          case 'timestamp':
+            setNestedValue(this.variables, varName, result.getTime());
+            break;
+          case 'readable':
+            setNestedValue(this.variables, varName, result.toLocaleString());
+            break;
+          default:
+            setNestedValue(this.variables, varName, result.toISOString());
+        }
+        return { success: true };
+      }
+
+      case 'mathOperation': {
+        const varName = config.variableName || 'result';
+        const operation = config.operation || 'add';
+        const valueA = parseFloat(interpolate(config.valueA || '0', this.variables)) || 0;
+        const valueB = parseFloat(interpolate(config.valueB || '0', this.variables)) || 0;
+        let result;
+
+        switch (operation) {
+          case 'add':
+            result = valueA + valueB;
+            break;
+          case 'subtract':
+            result = valueA - valueB;
+            break;
+          case 'multiply':
+            result = valueA * valueB;
+            break;
+          case 'divide':
+            result = valueB !== 0 ? valueA / valueB : 0;
+            break;
+          case 'modulo':
+            result = valueB !== 0 ? valueA % valueB : 0;
+            break;
+          case 'round':
+            result = Math.round(valueA);
+            break;
+          case 'floor':
+            result = Math.floor(valueA);
+            break;
+          case 'ceil':
+            result = Math.ceil(valueA);
+            break;
+          case 'abs':
+            result = Math.abs(valueA);
+            break;
+          case 'min':
+            result = Math.min(valueA, valueB);
+            break;
+          case 'max':
+            result = Math.max(valueA, valueB);
+            break;
+          default:
+            result = valueA;
+        }
+
+        setNestedValue(this.variables, varName, result);
+        return { success: true };
+      }
+
+      case 'textOperation': {
+        const varName = config.variableName || 'result';
+        const operation = config.operation || 'uppercase';
+        const text = interpolate(config.text || '', this.variables);
+        let result;
+
+        switch (operation) {
+          case 'uppercase':
+            result = text.toUpperCase();
+            break;
+          case 'lowercase':
+            result = text.toLowerCase();
+            break;
+          case 'trim':
+            result = text.trim();
+            break;
+          case 'length':
+            result = text.length;
+            break;
+          case 'substring':
+            result = text.substring(config.start || 0, config.end || text.length);
+            break;
+          case 'replace':
+            result = text.replace(new RegExp(config.search || '', 'g'), config.replaceWith || '');
+            break;
+          case 'split':
+            result = text.split(config.delimiter || ',');
+            break;
+          case 'join':
+            const arr = Array.isArray(this.variables[config.arrayVariable])
+              ? this.variables[config.arrayVariable]
+              : [];
+            result = arr.join(config.delimiter || ',');
+            break;
+          case 'capitalize':
+            result = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+            break;
+          case 'contains':
+            result = text.includes(config.search || '');
+            break;
+          default:
+            result = text;
+        }
+
+        setNestedValue(this.variables, varName, result);
+        return { success: true };
+      }
+
+      case 'markAsRead': {
+        // Mark the last received message as read (already done by webhook, but can be explicit)
+        return { success: true };
+      }
+
       default:
         return { success: true };
     }

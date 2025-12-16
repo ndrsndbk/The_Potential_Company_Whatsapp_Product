@@ -13,7 +13,27 @@ export type NodeType =
   | 'apiCall'
   | 'delay'
   | 'loop'
-  | 'end';
+  | 'end'
+  // New send message nodes
+  | 'sendTextEnhanced'
+  | 'sendVideo'
+  | 'sendAudio'
+  | 'sendDocument'
+  | 'sendLocation'
+  | 'sendContact'
+  | 'sendSticker'
+  // User data nodes
+  | 'getCustomerPhone'
+  | 'getCustomerName'
+  | 'getCustomerCountry'
+  | 'getMessageTimestamp'
+  // Utility nodes
+  | 'formatPhoneNumber'
+  | 'randomChoice'
+  | 'dateTime'
+  | 'mathOperation'
+  | 'textOperation'
+  | 'markAsRead';
 
 // Node configurations
 export interface TriggerConfig {
@@ -116,6 +136,112 @@ export interface EndConfig {
   endType: 'complete' | 'error';
 }
 
+// New send message configs
+export interface SendTextEnhancedConfig {
+  bodyText: string;
+  headerText?: string;
+  footerText?: string;
+}
+
+export interface SendVideoConfig {
+  videoUrl: string;
+  caption?: string;
+}
+
+export interface SendAudioConfig {
+  audioUrl: string;
+}
+
+export interface SendDocumentConfig {
+  documentUrl: string;
+  filename?: string;
+  caption?: string;
+}
+
+export interface SendLocationConfig {
+  latitude: string;
+  longitude: string;
+  name?: string;
+  address?: string;
+}
+
+export interface ContactItem {
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface SendContactConfig {
+  contacts: ContactItem[];
+}
+
+export interface SendStickerConfig {
+  stickerUrl: string;
+}
+
+// User data configs
+export interface GetCustomerPhoneConfig {
+  variableName: string;
+  format: 'e164' | 'local' | 'international';
+}
+
+export interface GetCustomerNameConfig {
+  variableName: string;
+}
+
+export interface GetCustomerCountryConfig {
+  variableName: string;
+}
+
+export interface GetMessageTimestampConfig {
+  variableName: string;
+}
+
+// Utility configs
+export interface FormatPhoneNumberConfig {
+  sourceVariable: string;
+  variableName: string;
+  format: 'e164' | 'local' | 'international';
+}
+
+export interface RandomChoiceConfig {
+  choices: string[];
+  variableName?: string;
+}
+
+export interface DateTimeConfig {
+  variableName: string;
+  operation: 'now' | 'today' | 'addDays' | 'addHours';
+  format: 'iso' | 'date' | 'time' | 'timestamp' | 'readable';
+  days?: number;
+  hours?: number;
+}
+
+export interface MathOperationConfig {
+  variableName: string;
+  operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'modulo' | 'round' | 'floor' | 'ceil' | 'abs' | 'min' | 'max';
+  valueA: string;
+  valueB?: string;
+}
+
+export interface TextOperationConfig {
+  variableName: string;
+  operation: 'uppercase' | 'lowercase' | 'trim' | 'length' | 'substring' | 'replace' | 'split' | 'join' | 'capitalize' | 'contains';
+  text: string;
+  start?: number;
+  end?: number;
+  search?: string;
+  replaceWith?: string;
+  delimiter?: string;
+  arrayVariable?: string;
+}
+
+export interface MarkAsReadConfig {
+  // No config needed, already handled by webhook
+}
+
 export type NodeConfig =
   | TriggerConfig
   | SendTextConfig
@@ -128,7 +254,24 @@ export type NodeConfig =
   | ApiCallConfig
   | DelayConfig
   | LoopConfig
-  | EndConfig;
+  | EndConfig
+  | SendTextEnhancedConfig
+  | SendVideoConfig
+  | SendAudioConfig
+  | SendDocumentConfig
+  | SendLocationConfig
+  | SendContactConfig
+  | SendStickerConfig
+  | GetCustomerPhoneConfig
+  | GetCustomerNameConfig
+  | GetCustomerCountryConfig
+  | GetMessageTimestampConfig
+  | FormatPhoneNumberConfig
+  | RandomChoiceConfig
+  | DateTimeConfig
+  | MathOperationConfig
+  | TextOperationConfig
+  | MarkAsReadConfig;
 
 // Flow node data - must extend Record<string, unknown> for React Flow
 export interface FlowNodeData extends Record<string, unknown> {
