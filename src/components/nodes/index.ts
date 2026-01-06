@@ -3,6 +3,7 @@ import { SendTextNode } from './SendTextNode';
 import { SendImageNode } from './SendImageNode';
 import { SendButtonsNode } from './SendButtonsNode';
 import { SendListNode } from './SendListNode';
+import { SendStampCardNode } from './SendStampCardNode';
 import { WaitForReplyNode } from './WaitForReplyNode';
 import { ConditionNode } from './ConditionNode';
 import { SetVariableNode } from './SetVariableNode';
@@ -18,6 +19,7 @@ export const nodeTypes: Record<string, any> = {
   sendImage: SendImageNode,
   sendButtons: SendButtonsNode,
   sendList: SendListNode,
+  sendStampCard: SendStampCardNode,
   waitForReply: WaitForReplyNode,
   condition: ConditionNode,
   setVariable: SetVariableNode,
@@ -33,6 +35,7 @@ export {
   SendImageNode,
   SendButtonsNode,
   SendListNode,
+  SendStampCardNode,
   WaitForReplyNode,
   ConditionNode,
   SetVariableNode,

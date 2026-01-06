@@ -376,3 +376,132 @@ CREATE POLICY "Users can view org execution logs"
             )
         )
     );
+
+-- ================================================================================
+-- CONVERSATIONS & MESSAGES (Live Chat Feature)
+-- ================================================================================
+
+-- Conversations table - tracks each contact conversation
+CREATE TABLE IF NOT EXISTS conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    whatsapp_config_id UUID REFERENCES whatsapp_configs(id) ON DELETE CASCADE,
+    contact_phone VARCHAR(50) NOT NULL,
+    contact_name TEXT,
+    last_message_at TIMESTAMPTZ,
+    last_message_preview TEXT,
+    last_message_direction VARCHAR(10), -- 'inbound' or 'outbound'
+    unread_count INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'active', -- 'active', 'archived', 'closed'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(whatsapp_config_id, contact_phone)
+);
+
+-- Messages table - stores all messages in conversations
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+    whatsapp_message_id VARCHAR(100), -- WhatsApp's message ID
+    direction VARCHAR(10) NOT NULL, -- 'inbound' or 'outbound'
+    message_type VARCHAR(30) NOT NULL DEFAULT 'text', -- 'text', 'image', 'audio', 'video', 'document', 'location', 'button', 'list'
+    content TEXT, -- Text content or caption
+    media_url TEXT, -- URL for media messages
+    metadata JSONB DEFAULT '{}', -- Additional data (button_id, list_row_id, coordinates, etc.)
+    status VARCHAR(20) DEFAULT 'sent', -- 'sent', 'delivered', 'read', 'failed'
+    sent_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Messaging windows table - tracks 24-hour free messaging window
+CREATE TABLE IF NOT EXISTS messaging_windows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    whatsapp_config_id UUID REFERENCES whatsapp_configs(id) ON DELETE CASCADE,
+    contact_phone VARCHAR(50) NOT NULL,
+    window_start TIMESTAMPTZ NOT NULL, -- When customer last messaged (window opens)
+    window_end TIMESTAMPTZ NOT NULL, -- 24 hours after window_start
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(whatsapp_config_id, contact_phone)
+);
+
+-- Indexes for conversations
+CREATE INDEX IF NOT EXISTS idx_conversations_org ON conversations(organization_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_config ON conversations(whatsapp_config_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_phone ON conversations(contact_phone);
+CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON conversations(last_message_at DESC);
+CREATE INDEX IF NOT EXISTS idx_conversations_status ON conversations(status);
+
+-- Indexes for messages
+CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON messages(sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_wa_id ON messages(whatsapp_message_id);
+
+-- Indexes for messaging windows
+CREATE INDEX IF NOT EXISTS idx_messaging_windows_config ON messaging_windows(whatsapp_config_id);
+CREATE INDEX IF NOT EXISTS idx_messaging_windows_phone ON messaging_windows(contact_phone);
+CREATE INDEX IF NOT EXISTS idx_messaging_windows_end ON messaging_windows(window_end);
+
+-- Enable RLS on new tables
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messaging_windows ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Conversations
+CREATE POLICY "Service role full access" ON conversations FOR ALL USING (true);
+CREATE POLICY "Users can view org conversations"
+    ON conversations FOR SELECT
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can manage org conversations"
+    ON conversations FOR ALL
+    USING (
+        organization_id IN (
+            SELECT organization_id FROM users
+            WHERE users.id = auth.uid()
+        )
+    );
+
+-- RLS Policies for Messages
+CREATE POLICY "Service role full access" ON messages FOR ALL USING (true);
+CREATE POLICY "Users can view org messages"
+    ON messages FOR SELECT
+    USING (
+        conversation_id IN (
+            SELECT id FROM conversations
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );
+
+CREATE POLICY "Users can manage org messages"
+    ON messages FOR ALL
+    USING (
+        conversation_id IN (
+            SELECT id FROM conversations
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );
+
+-- RLS Policies for Messaging Windows
+CREATE POLICY "Service role full access" ON messaging_windows FOR ALL USING (true);
+CREATE POLICY "Users can view org messaging windows"
+    ON messaging_windows FOR SELECT
+    USING (
+        whatsapp_config_id IN (
+            SELECT id FROM whatsapp_configs
+            WHERE organization_id IN (
+                SELECT organization_id FROM users
+                WHERE users.id = auth.uid()
+            )
+        )
+    );

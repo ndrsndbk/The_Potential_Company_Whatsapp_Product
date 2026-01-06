@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Settings, Workflow, RefreshCw, Trash2, Building2, Users, LogOut, BookOpen } from 'lucide-react';
+import { Plus, Settings, Workflow, RefreshCw, Trash2, Building2, Users, LogOut, BookOpen, MessageCircle, Contact, Stamp } from 'lucide-react';
 import { flowsApi, type Flow } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -93,6 +93,27 @@ export function FlowList() {
             >
               <BookOpen size={20} />
             </a>
+            <button
+              onClick={() => navigate('/conversations')}
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
+              title="Conversations"
+            >
+              <MessageCircle size={20} />
+            </button>
+            <button
+              onClick={() => navigate('/contacts')}
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
+              title="Contacts & Bulk Messaging"
+            >
+              <Contact size={20} />
+            </button>
+            <button
+              onClick={() => navigate('/stamp-templates')}
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
+              title="Stamp Card Templates"
+            >
+              <Stamp size={20} />
+            </button>
             <button
               onClick={() => navigate('/settings')}
               className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"

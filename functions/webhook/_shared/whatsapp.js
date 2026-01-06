@@ -361,6 +361,88 @@ export async function sendTextEnhanced(accessToken, phoneNumberId, to, bodyText,
 }
 
 /**
+ * Get media URL from WhatsApp using media ID
+ */
+export async function getMediaUrl(accessToken, mediaId) {
+  try {
+    const url = `${WA_API_BASE}/${WA_API_VERSION}/${mediaId}`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    const data = await response.json();
+    return data.url || null;
+  } catch (error) {
+    console.error('Failed to get media URL:', error);
+    return null;
+  }
+}
+
+/**
+ * Download media from WhatsApp and upload to CDN
+ * Returns permanent CDN URL
+ */
+export async function downloadAndUploadToCdn(accessToken, mediaId, cdnApiKey, cdnUrl = 'https://cdn.thepotentialcompany.com') {
+  try {
+    // First, get the temporary WhatsApp media URL
+    const waMediaUrl = await getMediaUrl(accessToken, mediaId);
+    if (!waMediaUrl) {
+      console.error('Failed to get WhatsApp media URL');
+      return null;
+    }
+
+    // Download the media from WhatsApp
+    const mediaResponse = await fetch(waMediaUrl, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!mediaResponse.ok) {
+      console.error('Failed to download media from WhatsApp:', mediaResponse.status);
+      return null;
+    }
+
+    const contentType = mediaResponse.headers.get('Content-Type') || 'application/octet-stream';
+    const mediaBuffer = await mediaResponse.arrayBuffer();
+
+    // Generate a unique key for the file
+    const ext = contentType.split('/')[1]?.split('+')[0] || 'bin';
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 10);
+    const key = `wa-${timestamp}-${random}.${ext}`;
+
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', new Blob([mediaBuffer], { type: contentType }), key);
+    formData.append('key', key);
+
+    // Upload to CDN
+    const uploadResponse = await fetch(`${cdnUrl}/upload`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': cdnApiKey,
+      },
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('Failed to upload to CDN:', uploadResponse.status, errorText);
+      return null;
+    }
+
+    const uploadResult = await uploadResponse.json();
+    console.log('Media uploaded to CDN:', uploadResult.url);
+    return uploadResult.url;
+  } catch (error) {
+    console.error('Error in downloadAndUploadToCdn:', error);
+    return null;
+  }
+}
+
+/**
  * Extract message content from webhook payload
  */
 export function extractMessageContent(message) {
@@ -369,6 +451,8 @@ export function extractMessageContent(message) {
     text: null,
     buttonId: null,
     listRowId: null,
+    mediaId: null,
+    mimeType: null,
   };
 
   switch (message.type) {
@@ -385,19 +469,36 @@ export function extractMessageContent(message) {
       }
       break;
     case 'image':
-      result.text = message.image?.caption || '[Image]';
+      result.text = message.image?.caption || '';
+      result.mediaId = message.image?.id;
+      result.mimeType = message.image?.mime_type;
       break;
     case 'document':
-      result.text = message.document?.caption || '[Document]';
+      result.text = message.document?.caption || message.document?.filename || '';
+      result.mediaId = message.document?.id;
+      result.mimeType = message.document?.mime_type;
+      result.filename = message.document?.filename;
       break;
     case 'audio':
-      result.text = '[Audio]';
+      result.text = '';
+      result.mediaId = message.audio?.id;
+      result.mimeType = message.audio?.mime_type;
       break;
     case 'video':
-      result.text = message.video?.caption || '[Video]';
+      result.text = message.video?.caption || '';
+      result.mediaId = message.video?.id;
+      result.mimeType = message.video?.mime_type;
+      break;
+    case 'sticker':
+      result.text = '';
+      result.mediaId = message.sticker?.id;
+      result.mimeType = message.sticker?.mime_type;
       break;
     case 'location':
-      result.text = `[Location: ${message.location?.latitude}, ${message.location?.longitude}]`;
+      result.text = `${message.location?.name || ''} ${message.location?.address || ''}`.trim() ||
+        `${message.location?.latitude}, ${message.location?.longitude}`;
+      result.latitude = message.location?.latitude;
+      result.longitude = message.location?.longitude;
       break;
     default:
       result.text = `[${message.type}]`;

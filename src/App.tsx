@@ -4,6 +4,9 @@ import { FlowList } from '@/pages/FlowList';
 import { FlowEditor } from '@/pages/FlowEditor';
 import { FlowLogs } from '@/pages/FlowLogs';
 import { Settings } from '@/pages/Settings';
+import { Conversations } from '@/pages/Conversations';
+import { Contacts } from '@/pages/Contacts';
+import { StampTemplates } from '@/pages/StampTemplates';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { AdminOrganizations } from '@/pages/admin/Organizations';
@@ -91,6 +94,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conversations"
+            element={
+              <ProtectedRoute>
+                <Conversations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contacts"
+            element={
+              <ProtectedRoute>
+                <Contacts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stamp-templates"
+            element={
+              <ProtectedRoute>
+                <StampTemplates />
               </ProtectedRoute>
             }
           />

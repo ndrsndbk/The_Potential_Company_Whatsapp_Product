@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFlowStore } from '@/stores/flowStore';
 import { X, Plus, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 import type {
   FlowNodeData,
   TriggerConfig,
@@ -515,15 +516,12 @@ function SendImageConfigForm({
   return (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Image URL
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Image
         </label>
-        <input
-          type="url"
+        <ImageUploader
           value={config.imageUrl || ''}
-          onChange={(e) => onChange({ imageUrl: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="https://example.com/image.png"
+          onChange={(url) => onChange({ imageUrl: url })}
         />
       </div>
       <div>
@@ -1618,109 +1616,239 @@ function SendStampCardConfigForm({
   config: SendStampCardConfig;
   onChange: (c: Partial<SendStampCardConfig>) => void;
 }) {
+  const [templates, setTemplates] = useState<Array<{
+    id: string;
+    name: string;
+    title: string;
+    total_stamps: number;
+    background_color: string;
+    accent_color: string;
+  }>>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+  // Load templates on mount
+  useEffect(() => {
+    const loadTemplates = async () => {
+      setLoadingTemplates(true);
+      try {
+        const token = localStorage.getItem('sb-auth-token') || '';
+        const response = await fetch('/api/stamp-templates', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTemplates(data.templates || []);
+        }
+      } catch (err) {
+        console.error('Failed to load templates:', err);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  const selectedTemplate = templates.find(t => t.id === config.templateId);
+  const STAMP_SERVER_URL = config.stampServerUrl || 'https://stampgen.thepotentialcompany.com';
+
   return (
     <>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Server URL</label>
-        <input
-          type="text"
-          value={config.stampServerUrl || ''}
-          onChange={(e) => onChange({ stampServerUrl: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="http://localhost:3000"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Count</label>
-        <input
-          type="text"
-          value={config.stampCount || ''}
-          onChange={(e) => onChange({ stampCount: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="{{stamp_count}} or 5"
-        />
-        <p className="mt-1 text-xs text-gray-500">Number 0-10 or use {'{{variable}}'}</p>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-        <input
-          type="text"
-          value={config.customerName || ''}
-          onChange={(e) => onChange({ customerName: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="{{customer_name}}"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
-        <input
-          type="text"
-          value={config.title || ''}
-          onChange={(e) => onChange({ title: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="ORIGIN JUICE BAR (default)"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle (optional)</label>
-        <input
-          type="text"
-          value={config.subtitle || ''}
-          onChange={(e) => onChange({ subtitle: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Get 10 stamps to earn 1 free drink (default)"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
-        <input
-          type="text"
-          value={config.caption || ''}
-          onChange={(e) => onChange({ caption: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Your loyalty card"
-        />
-      </div>
-
-      {/* Custom template toggle */}
-      <div className="flex items-center gap-2 pt-2 border-t border-gray-200 mt-2">
+      {/* Template Selection Toggle */}
+      <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
         <input
           type="checkbox"
-          id="useCustomTemplate"
-          checked={config.useCustomTemplate || false}
-          onChange={(e) => onChange({ useCustomTemplate: e.target.checked })}
-          className="rounded"
+          id="useTemplate"
+          checked={config.useTemplate || false}
+          onChange={(e) => onChange({ useTemplate: e.target.checked, useCustomTemplate: false })}
+          className="rounded text-purple-600"
         />
-        <label htmlFor="useCustomTemplate" className="text-sm text-gray-700">
-          Use custom HTML template
+        <label htmlFor="useTemplate" className="text-sm font-medium text-purple-800">
+          Use saved template
         </label>
       </div>
 
-      {config.useCustomTemplate && (
+      {config.useTemplate ? (
         <>
+          {/* Template Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Custom HTML</label>
-            <textarea
-              value={config.customHtml || ''}
-              onChange={(e) => onChange({ customHtml: e.target.value })}
-              rows={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
-              placeholder="<!DOCTYPE html>..."
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Template</label>
+            <select
+              value={config.templateId || ''}
+              onChange={(e) => onChange({ templateId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              disabled={loadingTemplates}
+            >
+              <option value="">
+                {loadingTemplates ? 'Loading...' : '-- Select a template --'}
+              </option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.total_stamps} stamps)
+                </option>
+              ))}
+            </select>
+            {templates.length === 0 && !loadingTemplates && (
+              <p className="mt-1 text-xs text-gray-500">
+                No templates found. <a href="/stamp-templates" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">Create one</a>
+              </p>
+            )}
+          </div>
+
+          {/* Template Preview */}
+          {selectedTemplate && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-2">Template Preview (with 5 stamps)</p>
+              <img
+                src={`${STAMP_SERVER_URL}/generate-card?n=5&name=Customer&title=${encodeURIComponent(selectedTemplate.title)}&total=${selectedTemplate.total_stamps}&bg=${encodeURIComponent(selectedTemplate.background_color)}&accent=${encodeURIComponent(selectedTemplate.accent_color)}`}
+                alt="Template Preview"
+                className="w-full rounded shadow-sm"
+                style={{ maxHeight: '150px', objectFit: 'contain' }}
+              />
+            </div>
+          )}
+
+          {/* Dynamic Variables */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Count</label>
+            <input
+              type="text"
+              value={config.stampCount || ''}
+              onChange={(e) => onChange({ stampCount: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="{{stamp_count}} or 5"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Use {'{{n}}'} for stamp count, {'{{name}}'} for customer name
-            </p>
+            <p className="mt-1 text-xs text-gray-500">Use {'{{variable}}'} for dynamic value</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Custom CSS (optional)</label>
-            <textarea
-              value={config.customStyle || ''}
-              onChange={(e) => onChange({ customStyle: e.target.value })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
-              placeholder=".card { background: #000; }"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+            <input
+              type="text"
+              value={config.customerName || ''}
+              onChange={(e) => onChange({ customerName: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="{{customer_name}}"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
+            <input
+              type="text"
+              value={config.caption || ''}
+              onChange={(e) => onChange({ caption: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Your loyalty card"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Manual Configuration */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Server URL</label>
+            <input
+              type="text"
+              value={config.stampServerUrl || ''}
+              onChange={(e) => onChange({ stampServerUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://stampgen.thepotentialcompany.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stamp Count</label>
+            <input
+              type="text"
+              value={config.stampCount || ''}
+              onChange={(e) => onChange({ stampCount: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="{{stamp_count}} or 5"
+            />
+            <p className="mt-1 text-xs text-gray-500">Number 0-10 or use {'{{variable}}'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+            <input
+              type="text"
+              value={config.customerName || ''}
+              onChange={(e) => onChange({ customerName: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="{{customer_name}}"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+            <input
+              type="text"
+              value={config.title || ''}
+              onChange={(e) => onChange({ title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="ORIGIN JUICE BAR (default)"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle (optional)</label>
+            <input
+              type="text"
+              value={config.subtitle || ''}
+              onChange={(e) => onChange({ subtitle: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Get 10 stamps to earn 1 free drink (default)"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
+            <input
+              type="text"
+              value={config.caption || ''}
+              onChange={(e) => onChange({ caption: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Your loyalty card"
+            />
+          </div>
+
+          {/* Custom template toggle */}
+          <div className="flex items-center gap-2 pt-2 border-t border-gray-200 mt-2">
+            <input
+              type="checkbox"
+              id="useCustomTemplate"
+              checked={config.useCustomTemplate || false}
+              onChange={(e) => onChange({ useCustomTemplate: e.target.checked })}
+              className="rounded"
+            />
+            <label htmlFor="useCustomTemplate" className="text-sm text-gray-700">
+              Use custom HTML template
+            </label>
+          </div>
+
+          {config.useCustomTemplate && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Custom HTML</label>
+                <textarea
+                  value={config.customHtml || ''}
+                  onChange={(e) => onChange({ customHtml: e.target.value })}
+                  rows={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+                  placeholder="<!DOCTYPE html>..."
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Use {'{{n}}'} for stamp count, {'{{name}}'} for customer name
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Custom CSS (optional)</label>
+                <textarea
+                  value={config.customStyle || ''}
+                  onChange={(e) => onChange({ customStyle: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+                  placeholder=".card { background: #000; }"
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </>

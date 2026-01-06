@@ -1,9 +1,109 @@
 // Dynamic webhook handler per WhatsApp config
 // URL: /webhook/:configId
 
-import { sbSelectOne, sbInsert } from '../lib/supabase.js';
+import { sbSelectOne, sbInsert, sbUpdate, sbUpsert } from '../lib/supabase.js';
 import { FlowEngine } from './_shared/engine.js';
-import { extractMessageContent, markAsRead } from './_shared/whatsapp.js';
+import { extractMessageContent, markAsRead, downloadAndUploadToCdn } from './_shared/whatsapp.js';
+
+/**
+ * Store incoming message and update conversation
+ */
+async function storeIncomingMessage(env, configId, customerId, contactName, messageContent, waMessageId, mediaUrl = null) {
+  try {
+    // Get config to find organization_id
+    const config = await sbSelectOne(env, 'whatsapp_configs', `id=eq.${configId}`, 'organization_id');
+    const orgId = config?.organization_id;
+
+    // Upsert conversation (create if not exists, update if exists)
+    const now = new Date().toISOString();
+    const messagePreview = (messageContent.text || `[${messageContent.type}]`).substring(0, 100);
+
+    // Try to get existing conversation
+    let conversation = await sbSelectOne(
+      env,
+      'conversations',
+      `whatsapp_config_id=eq.${configId}&contact_phone=eq.${customerId}`,
+      'id,unread_count'
+    );
+
+    if (conversation) {
+      // Update existing conversation
+      await sbUpdate(
+        env,
+        'conversations',
+        `id=eq.${conversation.id}`,
+        {
+          contact_name: contactName || customerId,
+          last_message_at: now,
+          last_message_preview: messagePreview,
+          last_message_direction: 'inbound',
+          unread_count: (conversation.unread_count || 0) + 1,
+          updated_at: now,
+        }
+      );
+    } else {
+      // Create new conversation
+      const newConv = await sbInsert(
+        env,
+        'conversations',
+        [{
+          organization_id: orgId,
+          whatsapp_config_id: configId,
+          contact_phone: customerId,
+          contact_name: contactName || customerId,
+          last_message_at: now,
+          last_message_preview: messagePreview,
+          last_message_direction: 'inbound',
+          unread_count: 1,
+          status: 'active',
+        }],
+        true
+      );
+      conversation = newConv[0];
+    }
+
+    // Store the message
+    await sbInsert(
+      env,
+      'messages',
+      [{
+        conversation_id: conversation.id,
+        whatsapp_message_id: waMessageId,
+        direction: 'inbound',
+        message_type: messageContent.type || 'text',
+        content: messageContent.text || null,
+        media_url: mediaUrl,
+        metadata: JSON.stringify({
+          buttonId: messageContent.buttonId,
+          listRowId: messageContent.listRowId,
+          mediaId: messageContent.mediaId,
+          mimeType: messageContent.mimeType,
+        }),
+        status: 'received',
+        sent_at: now,
+      }]
+    );
+
+    // Update messaging window (24-hour free messaging window)
+    const windowEnd = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await sbUpsert(
+      env,
+      'messaging_windows',
+      [{
+        whatsapp_config_id: configId,
+        contact_phone: customerId,
+        window_start: now,
+        window_end: windowEnd,
+      }],
+      ['whatsapp_config_id', 'contact_phone']
+    );
+
+    console.log('[WEBHOOK] Stored message in conversation:', conversation.id);
+  } catch (error) {
+    console.error('[WEBHOOK] Error storing message:', error);
+    // Don't throw - we don't want message storage failure to break flow execution
+  }
+}
 
 /**
  * GET - Webhook verification (Meta callback verification)
@@ -115,11 +215,28 @@ export async function onRequestPost(context) {
 
     // Extract message content
     const messageContent = extractMessageContent(message);
+    const contactName = contact?.profile?.name || customerId;
+
+    // Download media and upload to CDN if message has media
+    let mediaUrl = null;
+    if (messageContent.mediaId && env.CDN_API_KEY) {
+      console.log('[WEBHOOK] Downloading media and uploading to CDN for mediaId:', messageContent.mediaId);
+      mediaUrl = await downloadAndUploadToCdn(
+        config.access_token,
+        messageContent.mediaId,
+        env.CDN_API_KEY,
+        env.CDN_URL || 'https://cdn.thepotentialcompany.com'
+      );
+      console.log('[WEBHOOK] CDN upload result:', mediaUrl ? 'success' : 'failed');
+    }
+
+    // Store incoming message in conversations table
+    await storeIncomingMessage(env, configId, customerId, contactName, messageContent, messageId, mediaUrl);
 
     // Store contact info in variables (will be available in flow)
     engine.variables = {
       customer_phone: customerId,
-      customer_name: contact?.profile?.name || customerId,
+      customer_name: contactName,
       customer_wa_id: contact?.wa_id || customerId,
     };
 

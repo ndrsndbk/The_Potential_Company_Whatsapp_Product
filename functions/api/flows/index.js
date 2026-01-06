@@ -71,9 +71,12 @@ export async function onRequestPost(context) {
       flowData.organization_id = user.organization_id;
     }
 
-    // Add created_by if user is authenticated
+    // Only set created_by if user exists in users table (to avoid FK violation)
     if (user && user.id) {
-      flowData.created_by = user.id;
+      const userExists = await sbSelectOne(env, 'users', `id=eq.${user.id}`, 'id');
+      if (userExists) {
+        flowData.created_by = user.id;
+      }
     }
 
     const flowRows = await sbInsert(

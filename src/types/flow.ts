@@ -256,6 +256,9 @@ export interface SendStampCardConfig {
   customHtml?: string; // Full HTML template when useCustomTemplate is true
   customStyle?: string; // Additional CSS styles
   caption?: string; // WhatsApp image caption
+  // Template selection
+  templateId?: string; // Selected template ID
+  useTemplate: boolean; // Whether to use a saved template
 }
 
 export type NodeConfig =

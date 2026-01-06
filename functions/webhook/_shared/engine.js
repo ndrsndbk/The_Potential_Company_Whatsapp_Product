@@ -5,6 +5,62 @@ import * as wa from './whatsapp.js';
 import { interpolate, evaluateCondition, setNestedValue } from './variables.js';
 
 /**
+ * Store outbound message in conversations table
+ */
+async function storeOutboundMessage(env, configId, customerId, content, messageType = 'text', waMessageId = null, mediaUrl = null) {
+  try {
+    // Find conversation
+    const conversation = await sbSelectOne(
+      env,
+      'conversations',
+      `whatsapp_config_id=eq.${configId}&contact_phone=eq.${customerId}`,
+      'id'
+    );
+
+    if (!conversation) {
+      console.log('[ENGINE] No conversation found for outbound message storage');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const messagePreview = (content || `[${messageType}]`).substring(0, 100);
+
+    // Store the message
+    await sbInsert(
+      env,
+      'messages',
+      [{
+        conversation_id: conversation.id,
+        whatsapp_message_id: waMessageId,
+        direction: 'outbound',
+        message_type: messageType,
+        content: content,
+        media_url: mediaUrl,
+        status: 'sent',
+        sent_at: now,
+      }]
+    );
+
+    // Update conversation with last message info
+    await sbUpdate(
+      env,
+      'conversations',
+      `id=eq.${conversation.id}`,
+      {
+        last_message_at: now,
+        last_message_preview: messagePreview,
+        last_message_direction: 'outbound',
+        updated_at: now,
+      }
+    );
+
+    console.log('[ENGINE] Stored outbound message in conversation:', conversation.id);
+  } catch (error) {
+    console.error('[ENGINE] Error storing outbound message:', error);
+  }
+}
+
+/**
  * Main flow execution engine
  */
 export class FlowEngine {
@@ -261,6 +317,10 @@ export class FlowEngine {
           console.log('[ENGINE] WhatsApp API response:', JSON.stringify(result));
           if (result.error) {
             console.error('[ENGINE] WhatsApp API error:', result.error.message);
+          } else {
+            // Store outbound message
+            const waMessageId = result.messages?.[0]?.id;
+            await storeOutboundMessage(this.env, this.config.id, customerId, message, 'text', waMessageId);
           }
         } catch (err) {
           console.error('[ENGINE] Failed to send text:', err.message);
@@ -271,7 +331,11 @@ export class FlowEngine {
       case 'sendImage': {
         const imageUrl = interpolate(config.imageUrl || '', this.variables);
         const caption = interpolate(config.caption || '', this.variables);
-        await wa.sendImage(this.config.access_token, this.config.phone_number_id, customerId, imageUrl, caption);
+        const result = await wa.sendImage(this.config.access_token, this.config.phone_number_id, customerId, imageUrl, caption);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, caption || '', 'image', waMessageId, imageUrl);
+        }
         return { success: true };
       }
 
@@ -283,7 +347,7 @@ export class FlowEngine {
         }));
         const headerText = config.headerText ? interpolate(config.headerText, this.variables) : null;
         const footerText = config.footerText ? interpolate(config.footerText, this.variables) : null;
-        await wa.sendButtons(
+        const result = await wa.sendButtons(
           this.config.access_token,
           this.config.phone_number_id,
           customerId,
@@ -292,6 +356,10 @@ export class FlowEngine {
           headerText,
           footerText
         );
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, bodyText, 'button', waMessageId);
+        }
         return { success: true };
       }
 
@@ -308,7 +376,7 @@ export class FlowEngine {
         }));
         const headerText = config.headerText ? interpolate(config.headerText, this.variables) : null;
         const footerText = config.footerText ? interpolate(config.footerText, this.variables) : null;
-        await wa.sendList(
+        const result = await wa.sendList(
           this.config.access_token,
           this.config.phone_number_id,
           customerId,
@@ -318,6 +386,10 @@ export class FlowEngine {
           headerText,
           footerText
         );
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, bodyText, 'list', waMessageId);
+        }
         return { success: true };
       }
 
@@ -428,20 +500,32 @@ export class FlowEngine {
         const bodyText = interpolate(config.bodyText || config.message || '', this.variables);
         const headerText = config.headerText ? interpolate(config.headerText, this.variables) : null;
         const footerText = config.footerText ? interpolate(config.footerText, this.variables) : null;
-        await wa.sendTextEnhanced(this.config.access_token, this.config.phone_number_id, customerId, bodyText, headerText, footerText);
+        const result = await wa.sendTextEnhanced(this.config.access_token, this.config.phone_number_id, customerId, bodyText, headerText, footerText);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, bodyText, 'text', waMessageId);
+        }
         return { success: true };
       }
 
       case 'sendVideo': {
         const videoUrl = interpolate(config.videoUrl || '', this.variables);
         const caption = config.caption ? interpolate(config.caption, this.variables) : null;
-        await wa.sendVideo(this.config.access_token, this.config.phone_number_id, customerId, videoUrl, caption);
+        const result = await wa.sendVideo(this.config.access_token, this.config.phone_number_id, customerId, videoUrl, caption);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, caption || '', 'video', waMessageId, videoUrl);
+        }
         return { success: true };
       }
 
       case 'sendAudio': {
         const audioUrl = interpolate(config.audioUrl || '', this.variables);
-        await wa.sendAudio(this.config.access_token, this.config.phone_number_id, customerId, audioUrl);
+        const result = await wa.sendAudio(this.config.access_token, this.config.phone_number_id, customerId, audioUrl);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, '', 'audio', waMessageId, audioUrl);
+        }
         return { success: true };
       }
 
@@ -449,7 +533,11 @@ export class FlowEngine {
         const documentUrl = interpolate(config.documentUrl || '', this.variables);
         const filename = config.filename ? interpolate(config.filename, this.variables) : null;
         const caption = config.caption ? interpolate(config.caption, this.variables) : null;
-        await wa.sendDocument(this.config.access_token, this.config.phone_number_id, customerId, documentUrl, filename, caption);
+        const result = await wa.sendDocument(this.config.access_token, this.config.phone_number_id, customerId, documentUrl, filename, caption);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, caption || filename || '', 'document', waMessageId, documentUrl);
+        }
         return { success: true };
       }
 
@@ -458,7 +546,11 @@ export class FlowEngine {
         const longitude = interpolate(config.longitude || '0', this.variables);
         const name = config.name ? interpolate(config.name, this.variables) : null;
         const address = config.address ? interpolate(config.address, this.variables) : null;
-        await wa.sendLocation(this.config.access_token, this.config.phone_number_id, customerId, latitude, longitude, name, address);
+        const result = await wa.sendLocation(this.config.access_token, this.config.phone_number_id, customerId, latitude, longitude, name, address);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, name || address || '[Location]', 'location', waMessageId);
+        }
         return { success: true };
       }
 
@@ -470,13 +562,22 @@ export class FlowEngine {
           phone: c.phone ? interpolate(c.phone, this.variables) : null,
           email: c.email ? interpolate(c.email, this.variables) : null,
         }));
-        await wa.sendContact(this.config.access_token, this.config.phone_number_id, customerId, contacts);
+        const result = await wa.sendContact(this.config.access_token, this.config.phone_number_id, customerId, contacts);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          const contactNames = contacts.map(c => c.name).join(', ');
+          await storeOutboundMessage(this.env, this.config.id, customerId, `[Contact: ${contactNames}]`, 'contact', waMessageId);
+        }
         return { success: true };
       }
 
       case 'sendSticker': {
         const stickerUrl = interpolate(config.stickerUrl || '', this.variables);
-        await wa.sendSticker(this.config.access_token, this.config.phone_number_id, customerId, stickerUrl);
+        const result = await wa.sendSticker(this.config.access_token, this.config.phone_number_id, customerId, stickerUrl);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, '', 'sticker', waMessageId, stickerUrl);
+        }
         return { success: true };
       }
 
@@ -711,7 +812,11 @@ export class FlowEngine {
         }
 
         // Send the stamp card as an image
-        await wa.sendImage(this.config.access_token, this.config.phone_number_id, customerId, stampCardUrl, caption);
+        const result = await wa.sendImage(this.config.access_token, this.config.phone_number_id, customerId, stampCardUrl, caption);
+        if (!result.error) {
+          const waMessageId = result.messages?.[0]?.id;
+          await storeOutboundMessage(this.env, this.config.id, customerId, caption || '', 'image', waMessageId, stampCardUrl);
+        }
         return { success: true };
       }
 

@@ -358,3 +358,293 @@ export const adminUsersApi = {
     });
   },
 };
+
+// Conversation types
+export interface Conversation {
+  id: string;
+  organization_id: string;
+  whatsapp_config_id: string;
+  contact_phone: string;
+  contact_name: string | null;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+  last_message_direction: 'inbound' | 'outbound' | null;
+  unread_count: number;
+  status: 'active' | 'archived' | 'closed';
+  created_at: string;
+  updated_at: string;
+  in_free_window: boolean;
+  window_expires_at: string | null;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  whatsapp_message_id: string | null;
+  direction: 'inbound' | 'outbound';
+  message_type: string;
+  content: string | null;
+  media_url: string | null;
+  metadata: Record<string, unknown>;
+  status: 'sent' | 'delivered' | 'read' | 'failed' | 'received';
+  sent_at: string;
+  created_at: string;
+}
+
+export interface ConversationsResponse {
+  conversations: Conversation[];
+  pagination: {
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}
+
+export interface ConversationDetailResponse {
+  conversation: Conversation;
+  messages: Message[];
+  pagination: {
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}
+
+export interface MessagesResponse {
+  messages: Message[];
+  pagination: {
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}
+
+// Stamp Card Template types
+export interface StampCardTemplate {
+  id: string;
+  organization_id: string | null;
+  name: string;
+  title: string;
+  subtitle: string;
+  total_stamps: number;
+  stamp_icon: string;
+  background_color: string;
+  accent_color: string;
+  logo_url: string | null;
+  reward_text: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Stamp Card Templates API
+export const stampTemplatesApi = {
+  async list(): Promise<{ templates: StampCardTemplate[] }> {
+    return fetchApi('/stamp-templates');
+  },
+
+  async get(id: string): Promise<{ template: StampCardTemplate }> {
+    return fetchApi(`/stamp-templates/${id}`);
+  },
+
+  async create(data: {
+    name: string;
+    title?: string;
+    subtitle?: string;
+    total_stamps?: number;
+    stamp_icon?: string;
+    background_color?: string;
+    accent_color?: string;
+    logo_url?: string;
+    reward_text?: string;
+  }): Promise<{ template: StampCardTemplate }> {
+    return fetchApi('/stamp-templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      title?: string;
+      subtitle?: string;
+      total_stamps?: number;
+      stamp_icon?: string;
+      background_color?: string;
+      accent_color?: string;
+      logo_url?: string;
+      reward_text?: string;
+      is_active?: boolean;
+    }
+  ): Promise<{ template: StampCardTemplate }> {
+    return fetchApi(`/stamp-templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string): Promise<{ success: boolean }> {
+    return fetchApi(`/stamp-templates/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Conversations API
+export const conversationsApi = {
+  async list(params?: {
+    status?: string;
+    config_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ConversationsResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.config_id) searchParams.set('config_id', params.config_id);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+
+    const query = searchParams.toString();
+    return fetchApi(`/conversations${query ? `?${query}` : ''}`);
+  },
+
+  async get(
+    id: string,
+    messageLimit?: number,
+    messageOffset?: number
+  ): Promise<ConversationDetailResponse> {
+    const searchParams = new URLSearchParams();
+    if (messageLimit) searchParams.set('message_limit', String(messageLimit));
+    if (messageOffset) searchParams.set('message_offset', String(messageOffset));
+
+    const query = searchParams.toString();
+    return fetchApi(`/conversations/${id}${query ? `?${query}` : ''}`);
+  },
+
+  async update(
+    id: string,
+    data: {
+      status?: string;
+      contact_name?: string;
+      mark_read?: boolean;
+    }
+  ): Promise<{ conversation: Conversation }> {
+    return fetchApi(`/conversations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async archive(id: string): Promise<{ success: boolean }> {
+    return fetchApi(`/conversations/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getMessages(
+    id: string,
+    limit?: number,
+    offset?: number,
+    before?: string
+  ): Promise<MessagesResponse> {
+    const searchParams = new URLSearchParams();
+    if (limit) searchParams.set('limit', String(limit));
+    if (offset) searchParams.set('offset', String(offset));
+    if (before) searchParams.set('before', before);
+
+    const query = searchParams.toString();
+    return fetchApi(`/conversations/${id}/messages${query ? `?${query}` : ''}`);
+  },
+
+  async sendMessage(
+    id: string,
+    content: string,
+    messageType: string = 'text'
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content, message_type: messageType }),
+    });
+  },
+
+  async sendImage(
+    id: string,
+    mediaUrl: string,
+    caption?: string
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message_type: 'image',
+        media_url: mediaUrl,
+        caption,
+      }),
+    });
+  },
+
+  async sendVideo(
+    id: string,
+    mediaUrl: string,
+    caption?: string
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message_type: 'video',
+        media_url: mediaUrl,
+        caption,
+      }),
+    });
+  },
+
+  async sendAudio(
+    id: string,
+    mediaUrl: string
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message_type: 'audio',
+        media_url: mediaUrl,
+      }),
+    });
+  },
+
+  async sendDocument(
+    id: string,
+    mediaUrl: string,
+    filename?: string,
+    caption?: string
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message_type: 'document',
+        media_url: mediaUrl,
+        filename,
+        caption,
+      }),
+    });
+  },
+
+  async sendLocation(
+    id: string,
+    latitude: number,
+    longitude: number,
+    name?: string,
+    address?: string
+  ): Promise<{ message: Message; whatsapp_response: unknown }> {
+    return fetchApi(`/conversations/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message_type: 'location',
+        latitude,
+        longitude,
+        location_name: name,
+        location_address: address,
+      }),
+    });
+  },
+};
