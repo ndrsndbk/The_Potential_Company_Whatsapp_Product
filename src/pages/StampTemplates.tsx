@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -11,6 +11,10 @@ import {
   Check,
   X,
   Eye,
+  Coffee,
+  Star,
+  Heart,
+  CheckCircle,
 } from 'lucide-react';
 import { stampTemplatesApi, type StampCardTemplate } from '@/lib/api';
 
@@ -69,6 +73,22 @@ const defaultFormData: TemplateFormData = {
   reward_text: 'FREE ITEM',
 };
 
+// Get stamp icon component based on icon type
+function getStampIcon(iconType: string, size: number = 16, color: string = 'currentColor') {
+  switch (iconType) {
+    case 'cup':
+      return <Coffee size={size} color={color} />;
+    case 'star':
+      return <Star size={size} color={color} />;
+    case 'heart':
+      return <Heart size={size} color={color} />;
+    case 'check':
+      return <CheckCircle size={size} color={color} />;
+    default:
+      return <Coffee size={size} color={color} />;
+  }
+}
+
 function StampCardPreview({
   template,
   stampCount = 3,
@@ -78,40 +98,86 @@ function StampCardPreview({
   stampCount?: number;
   customerName?: string;
 }) {
-  const [imageKey, setImageKey] = useState(0);
+  const totalStamps = template.total_stamps || 10;
+  const bgColor = template.background_color || '#000000';
+  const accentColor = template.accent_color || '#ccff00';
+  const title = template.title || 'LOYALTY CARD';
+  const subtitle = template.subtitle || '';
 
-  // Force refresh when template changes
-  useEffect(() => {
-    setImageKey(prev => prev + 1);
-  }, [template.title, template.subtitle, template.total_stamps, template.background_color, template.accent_color, template.reward_text, stampCount]);
-
-  const previewUrl = useMemo(() => {
-    const params = new URLSearchParams({
-      n: String(stampCount),
-      name: customerName,
-      title: template.title || 'LOYALTY CARD',
-      subtitle: template.subtitle || '',
-      total: String(template.total_stamps || 10),
-      bg: template.background_color || '#000000',
-      accent: template.accent_color || '#ccff00',
-      _t: String(imageKey), // Cache buster
-    });
-    if (template.reward_text) params.set('reward', template.reward_text);
-    return `${STAMP_SERVER_URL}/generate-card?${params.toString()}`;
-  }, [template, stampCount, customerName, imageKey]);
+  // Calculate grid layout - 5 columns max
+  const cols = Math.min(5, totalStamps);
+  const rows = Math.ceil(totalStamps / cols);
 
   return (
-    <div className="relative">
-      <img
-        key={imageKey}
-        src={previewUrl}
-        alt="Stamp Card Preview"
-        className="w-full rounded-lg shadow-lg"
-        style={{ maxWidth: '400px' }}
-      />
-      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-        Preview: {stampCount}/{template.total_stamps} stamps
+    <div
+      className="relative rounded-2xl p-4 shadow-lg"
+      style={{
+        backgroundColor: bgColor,
+        maxWidth: '400px',
+        border: `3px solid ${accentColor}`,
+      }}
+    >
+      {/* Header */}
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3
+            className="font-bold text-lg tracking-wide"
+            style={{ color: accentColor }}
+          >
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-xs opacity-70" style={{ color: accentColor }}>
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <div style={{ color: accentColor }}>
+          {getStampIcon(template.stamp_icon, 24, accentColor)}
+        </div>
       </div>
+
+      {/* Stamp Grid */}
+      <div
+        className="grid gap-2 mb-3"
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
+        {Array.from({ length: totalStamps }).map((_, index) => {
+          const isStamped = index < stampCount;
+          return (
+            <div
+              key={index}
+              className="aspect-square rounded-full flex items-center justify-center transition-all"
+              style={{
+                backgroundColor: isStamped ? accentColor : `${accentColor}33`,
+                border: `2px solid ${accentColor}`,
+              }}
+            >
+              {isStamped && getStampIcon(template.stamp_icon, 16, bgColor)}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-between items-center text-xs">
+        <span style={{ color: accentColor }} className="opacity-70">
+          {customerName}
+        </span>
+        <span style={{ color: accentColor }} className="font-medium">
+          {stampCount}/{totalStamps} stamps
+        </span>
+      </div>
+
+      {/* Reward text */}
+      {template.reward_text && (
+        <div
+          className="mt-2 text-center text-xs py-1 rounded"
+          style={{ backgroundColor: `${accentColor}22`, color: accentColor }}
+        >
+          🎁 {template.reward_text}
+        </div>
+      )}
     </div>
   );
 }
