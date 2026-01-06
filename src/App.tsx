@@ -11,6 +11,7 @@ import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { AdminOrganizations } from '@/pages/admin/Organizations';
 import { AdminUsers } from '@/pages/admin/Users';
+import FlowRuns from './pages/FlowRuns';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -118,6 +119,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <StampTemplates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flow-runs"
+            element={
+              <ProtectedRoute>
+                <FlowRuns />
               </ProtectedRoute>
             }
           />
