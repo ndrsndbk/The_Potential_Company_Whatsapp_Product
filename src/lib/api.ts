@@ -301,7 +301,6 @@ export interface FlowRunDetail {
   flow: {
     id: string;
     name: string;
-    version: number | null;
     trigger_type: string;
     trigger_value: string | null;
   };

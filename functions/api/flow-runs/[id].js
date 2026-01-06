@@ -25,7 +25,7 @@ export async function onRequestGet(context) {
       env,
       'flows',
       `id=eq.${execution.flow_id}`,
-      'id,name,version,organization_id,trigger_type,trigger_value'
+      'id,name,organization_id,trigger_type,trigger_value'
     );
 
     if (!flow) {
@@ -121,7 +121,6 @@ export async function onRequestGet(context) {
       flow: {
         id: flow.id,
         name: flow.name,
-        version: flow.version,
         trigger_type: flow.trigger_type,
         trigger_value: flow.trigger_value,
       },
