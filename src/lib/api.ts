@@ -271,6 +271,97 @@ export const flowLogsApi = {
   },
 };
 
+// Flow Run types
+export interface FlowRun {
+  id: string;
+  flow_id: string;
+  flow_name: string;
+  flow_version_id: string | null;
+  customer_id: string;
+  customer_name: string | null;
+  customer_phone: string;
+  status: 'running' | 'completed' | 'failed';
+  variables: Record<string, unknown>;
+  current_node_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  nodes_executed: number;
+  error_message: string | null;
+}
+
+export interface FlowRunDetail {
+  id: string;
+  status: string;
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+  variables: Record<string, unknown>;
+  current_node_id: string | null;
+  error_message: string | null;
+  flow: {
+    id: string;
+    name: string;
+    version: number | null;
+    trigger_type: string;
+    trigger_value: string | null;
+  };
+  customer: {
+    id?: string;
+    phone: string;
+    name: string | null;
+    dob?: string | null;
+    preferences?: Record<string, unknown>;
+    custom_fields?: Record<string, unknown>;
+    visit_count?: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+  execution_logs: Array<{
+    id: string;
+    node_id: string;
+    action: string;
+    data: Record<string, unknown>;
+    created_at: string;
+  }>;
+  conversation_messages: Message[];
+}
+
+export interface FlowRunsResponse {
+  runs: FlowRun[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}
+
+// Flow Runs API
+export const flowRunsApi = {
+  async list(params?: {
+    flow_id?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+    date_from?: string;
+    date_to?: string;
+  }): Promise<FlowRunsResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.flow_id) searchParams.set('flow_id', params.flow_id);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.date_from) searchParams.set('date_from', params.date_from);
+    if (params?.date_to) searchParams.set('date_to', params.date_to);
+    const query = searchParams.toString();
+    return fetchApi(`/flow-runs${query ? `?${query}` : ''}`);
+  },
+
+  async get(id: string): Promise<{ flow_run: FlowRunDetail }> {
+    return fetchApi(`/flow-runs/${id}`);
+  },
+};
+
 // Admin Organizations API
 export const adminOrganizationsApi = {
   async list(): Promise<{ organizations: Organization[] }> {
@@ -432,6 +523,7 @@ export interface StampCardTemplate {
   accent_color: string;
   logo_url: string | null;
   reward_text: string;
+  font_family: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -457,6 +549,7 @@ export const stampTemplatesApi = {
     accent_color?: string;
     logo_url?: string;
     reward_text?: string;
+    font_family?: string;
   }): Promise<{ template: StampCardTemplate }> {
     return fetchApi('/stamp-templates', {
       method: 'POST',
@@ -476,6 +569,7 @@ export const stampTemplatesApi = {
       accent_color?: string;
       logo_url?: string;
       reward_text?: string;
+      font_family?: string;
       is_active?: boolean;
     }
   ): Promise<{ template: StampCardTemplate }> {

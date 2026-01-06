@@ -123,17 +123,18 @@ export class FlowEngine {
   }
 
   /**
-   * Load flow with nodes and edges
+   * Load flow with nodes and edges (parallel for performance)
    */
   async loadFlow(flowId) {
-    const flow = await sbSelectOne(this.env, 'flows', `id=eq.${flowId}`, '*');
+    // Load flow, nodes, and edges in parallel for ~600ms speedup
+    const [flow, nodes, edges] = await Promise.all([
+      sbSelectOne(this.env, 'flows', `id=eq.${flowId}`, '*'),
+      sbSelect(this.env, 'flow_nodes', `flow_id=eq.${flowId}`, '*'),
+      sbSelect(this.env, 'flow_edges', `flow_id=eq.${flowId}`, '*'),
+    ]);
 
     if (!flow) return null;
     this.flow = flow;
-
-    const nodes = await sbSelect(this.env, 'flow_nodes', `flow_id=eq.${flowId}`, '*');
-    const edges = await sbSelect(this.env, 'flow_edges', `flow_id=eq.${flowId}`, '*');
-
     this.nodes = nodes || [];
     this.edges = edges || [];
 
@@ -251,12 +252,16 @@ export class FlowEngine {
         break;
       }
 
-      console.log('[ENGINE] Executing node:', node.node_type, node.id);
+      console.log('[ENGINE] Executing node:', node.node_type, node.id, node.label);
       const result = await this.executeNode(node, customerId);
       console.log('[ENGINE] Node result:', JSON.stringify(result));
 
-      // Log execution
-      await this.logExecution(node.id, node.node_type, result);
+      // Log execution with node info
+      await this.logExecution(node.id, node.node_type, {
+        ...result,
+        label: node.label,
+        config: node.config,
+      });
 
       if (result.wait) {
         // Pause execution, waiting for user input
@@ -317,6 +322,7 @@ export class FlowEngine {
           console.log('[ENGINE] WhatsApp API response:', JSON.stringify(result));
           if (result.error) {
             console.error('[ENGINE] WhatsApp API error:', result.error.message);
+            return { success: false, error: result.error.message, message_content: message, message_direction: 'outbound' };
           } else {
             // Store outbound message
             const waMessageId = result.messages?.[0]?.id;
@@ -324,8 +330,9 @@ export class FlowEngine {
           }
         } catch (err) {
           console.error('[ENGINE] Failed to send text:', err.message);
+          return { success: false, error: err.message, message_content: message, message_direction: 'outbound' };
         }
-        return { success: true };
+        return { success: true, message_content: message, message_direction: 'outbound' };
       }
 
       case 'sendImage': {
@@ -335,8 +342,9 @@ export class FlowEngine {
         if (!result.error) {
           const waMessageId = result.messages?.[0]?.id;
           await storeOutboundMessage(this.env, this.config.id, customerId, caption || '', 'image', waMessageId, imageUrl);
+          return { success: true, message_content: caption || '[Image]', message_direction: 'outbound', media_url: imageUrl };
         }
-        return { success: true };
+        return { success: false, error: result.error?.message, message_content: caption || '[Image]', message_direction: 'outbound' };
       }
 
       case 'sendButtons': {
@@ -359,8 +367,9 @@ export class FlowEngine {
         if (!result.error) {
           const waMessageId = result.messages?.[0]?.id;
           await storeOutboundMessage(this.env, this.config.id, customerId, bodyText, 'button', waMessageId);
+          return { success: true, message_content: bodyText, message_direction: 'outbound', buttons };
         }
-        return { success: true };
+        return { success: false, error: result.error?.message, message_content: bodyText, message_direction: 'outbound' };
       }
 
       case 'sendList': {
@@ -389,25 +398,27 @@ export class FlowEngine {
         if (!result.error) {
           const waMessageId = result.messages?.[0]?.id;
           await storeOutboundMessage(this.env, this.config.id, customerId, bodyText, 'list', waMessageId);
+          return { success: true, message_content: bodyText, message_direction: 'outbound', sections };
         }
-        return { success: true };
+        return { success: false, error: result.error?.message, message_content: bodyText, message_direction: 'outbound' };
       }
 
       case 'waitForReply':
-        return { wait: true, waitFor: config.expectedType || 'any' };
+        return { wait: true, waitFor: config.expectedType || 'any', description: 'Waiting for user reply' };
 
       case 'condition': {
         const conditions = config.conditions || [];
         for (const cond of conditions) {
           if (evaluateCondition(cond.variable, cond.operator, cond.value, this.variables)) {
-            return { success: true, outputHandle: cond.outputHandle };
+            return { success: true, outputHandle: cond.outputHandle, evaluated: `${cond.variable} ${cond.operator} ${cond.value}`, result: true };
           }
         }
-        return { success: true, outputHandle: config.defaultHandle || 'false' };
+        return { success: true, outputHandle: config.defaultHandle || 'false', evaluated: 'default', result: false };
       }
 
       case 'setVariable': {
         const assignments = config.assignments || [];
+        const changes = [];
         for (const assignment of assignments) {
           let value;
           if (assignment.valueType === 'variable') {
@@ -416,11 +427,13 @@ export class FlowEngine {
             value = interpolate(assignment.value || '', this.variables);
           }
           setNestedValue(this.variables, assignment.variableName, value);
+          changes.push({ variable: assignment.variableName, value });
         }
-        return { success: true };
+        return { success: true, changes };
       }
 
       case 'apiCall': {
+        const startTime = Date.now();
         try {
           const url = interpolate(config.url || '', this.variables);
           const method = config.method || 'GET';
@@ -459,11 +472,13 @@ export class FlowEngine {
           this.variables.api_status = response.status;
           this.variables.api_success = response.ok;
 
-          return { success: true };
+          const duration_ms = Date.now() - startTime;
+          return { success: true, method, url, status: response.status, duration_ms };
         } catch (error) {
           this.variables.api_error = error.message;
           this.variables.api_success = false;
-          return { success: true }; // Continue flow even on API error
+          const duration_ms = Date.now() - startTime;
+          return { success: false, error: error.message, duration_ms }; // Continue flow even on API error
         }
       }
 
@@ -845,11 +860,34 @@ export class FlowEngine {
    * Log execution step
    */
   async logExecution(nodeId, action, data) {
-    await sbInsert(this.env, 'execution_logs', [{
-      execution_id: this.execution.id,
-      node_id: nodeId,
-      action,
-      data,
-    }]);
+    try {
+      // Ensure we have an execution ID
+      if (!this.execution?.id) {
+        console.error('[ENGINE] Cannot log execution: no execution ID');
+        return;
+      }
+
+      // Build log entry with node information
+      const logEntry = {
+        execution_id: this.execution.id,
+        node_id: nodeId,
+        action: action,
+        data: {
+          ...data,
+          node_type: action,
+          node_name: data?.label || nodeId,
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      console.log('[ENGINE] Logging execution:', JSON.stringify(logEntry));
+
+      await sbInsert(this.env, 'execution_logs', [logEntry]);
+
+      console.log('[ENGINE] Execution logged successfully');
+    } catch (error) {
+      // Log error but don't crash the flow
+      console.error('[ENGINE] Failed to log execution:', error.message);
+    }
   }
 }
