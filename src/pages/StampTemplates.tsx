@@ -78,6 +78,13 @@ function StampCardPreview({
   stampCount?: number;
   customerName?: string;
 }) {
+  const [imageKey, setImageKey] = useState(0);
+
+  // Force refresh when template changes
+  useEffect(() => {
+    setImageKey(prev => prev + 1);
+  }, [template.title, template.subtitle, template.total_stamps, template.background_color, template.accent_color, template.reward_text, stampCount]);
+
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({
       n: String(stampCount),
@@ -87,14 +94,16 @@ function StampCardPreview({
       total: String(template.total_stamps || 10),
       bg: template.background_color || '#000000',
       accent: template.accent_color || '#ccff00',
+      _t: String(imageKey), // Cache buster
     });
     if (template.reward_text) params.set('reward', template.reward_text);
     return `${STAMP_SERVER_URL}/generate-card?${params.toString()}`;
-  }, [template, stampCount, customerName]);
+  }, [template, stampCount, customerName, imageKey]);
 
   return (
     <div className="relative">
       <img
+        key={imageKey}
         src={previewUrl}
         alt="Stamp Card Preview"
         className="w-full rounded-lg shadow-lg"
