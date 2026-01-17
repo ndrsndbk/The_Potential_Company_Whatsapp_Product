@@ -132,3 +132,19 @@ export async function sbUpsert(env, table, rows, keyCols, returning = false) {
   }
   return null;
 }
+
+// RPC (call database function)
+export async function sbRpc(env, functionName, params = {}) {
+  const { url } = getSupabaseConfig(env);
+  const res = await fetch(`${url}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: sbHeaders(env),
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`Supabase RPC ${functionName} error`, res.status, text);
+    throw new Error(`Supabase RPC error: ${text}`);
+  }
+  return res.json();
+}

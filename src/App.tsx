@@ -12,6 +12,10 @@ import { Register } from '@/pages/Register';
 import { AdminOrganizations } from '@/pages/admin/Organizations';
 import { AdminUsers } from '@/pages/admin/Users';
 import FlowRuns from './pages/FlowRuns';
+import { LoyaltyDashboard } from '@/pages/loyalty/LoyaltyDashboard';
+import { LoyaltyCustomers } from '@/pages/loyalty/LoyaltyCustomers';
+import { LoyaltySettings } from '@/pages/loyalty/LoyaltySettings';
+import { PublicDashboard } from '@/pages/loyalty/PublicDashboard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -146,6 +150,31 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route
+            path="/loyalty"
+            element={
+              <ProtectedRoute>
+                <LoyaltyDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loyalty/customers"
+            element={
+              <ProtectedRoute>
+                <LoyaltyCustomers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loyalty/settings"
+            element={
+              <ProtectedRoute>
+                <LoyaltySettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/d/:token" element={<PublicDashboard />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

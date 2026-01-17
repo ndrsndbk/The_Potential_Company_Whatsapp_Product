@@ -7,6 +7,7 @@ import { getSupabaseConfig } from './lib/supabase.js';
 const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/public/',
   '/webhook',
 ];
 

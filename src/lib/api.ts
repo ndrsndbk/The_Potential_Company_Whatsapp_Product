@@ -741,3 +741,219 @@ export const conversationsApi = {
     });
   },
 };
+
+// Stamp Program types
+export interface StampProgram {
+  id: string;
+  organization_id: string;
+  business_name: string;
+  total_stamps: number;
+  stamp_icon: string;
+  background_color: string;
+  accent_color: string;
+  reward_text: string;
+  trigger_keyword: string;
+  dashboard_token: string | null;
+  tier: 'free' | 'pro' | 'enterprise';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StampProgramStats {
+  total_customers: number;
+  active_cards: number;
+  total_stamps: number;
+  completed_cards: number;
+  stamps_this_week: number;
+  new_customers_this_week: number;
+  segments: {
+    new: number;
+    regular: number;
+    almost_there: number;
+    reward_ready: number;
+    lapsed: number;
+  };
+  recent_events: Array<{
+    type: 'stamp' | 'reward' | 'new_customer';
+    description: string;
+    created_at: string;
+  }>;
+}
+
+export interface LoyaltyCustomer {
+  id: string;
+  phone: string;
+  name: string | null;
+  current_stamps: number;
+  total_stamps_earned: number;
+  rewards_claimed: number;
+  segment: string;
+  last_visit: string | null;
+  created_at: string;
+}
+
+export interface LoyaltyEvent {
+  id: string;
+  type: 'stamp' | 'reward_claimed' | 'card_reset';
+  customer_id: string;
+  customer_phone: string;
+  customer_name: string | null;
+  stamps_before: number;
+  stamps_after: number;
+  created_at: string;
+}
+
+// Stamp Programs API
+export const stampProgramsApi = {
+  async list(): Promise<{ programs: StampProgram[] }> {
+    return fetchApi('/stamp-programs');
+  },
+
+  async get(id: string): Promise<{ program: StampProgram }> {
+    return fetchApi(`/stamp-programs/${id}`);
+  },
+
+  async create(data: {
+    business_name: string;
+    total_stamps?: number;
+    stamp_icon?: string;
+    background_color?: string;
+    accent_color?: string;
+    reward_text?: string;
+    trigger_keyword?: string;
+  }): Promise<{ program: StampProgram }> {
+    return fetchApi('/stamp-programs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async update(
+    id: string,
+    data: {
+      business_name?: string;
+      total_stamps?: number;
+      stamp_icon?: string;
+      background_color?: string;
+      accent_color?: string;
+      reward_text?: string;
+      trigger_keyword?: string;
+      is_active?: boolean;
+    }
+  ): Promise<{ program: StampProgram }> {
+    return fetchApi(`/stamp-programs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string): Promise<{ success: boolean }> {
+    return fetchApi(`/stamp-programs/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getStats(id: string): Promise<StampProgramStats> {
+    return fetchApi(`/stamp-programs/${id}/stats`);
+  },
+
+  async getCustomers(
+    id: string,
+    params?: {
+      limit?: number;
+      offset?: number;
+      segment?: string;
+      search?: string;
+    }
+  ): Promise<{
+    customers: LoyaltyCustomer[];
+    pagination: {
+      total: number;
+      limit: number;
+      offset: number;
+      has_more: boolean;
+    };
+  }> {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.segment) searchParams.set('segment', params.segment);
+    if (params?.search) searchParams.set('search', params.search);
+    const query = searchParams.toString();
+    return fetchApi(`/stamp-programs/${id}/customers${query ? `?${query}` : ''}`);
+  },
+
+  async getEvents(
+    id: string,
+    params?: {
+      limit?: number;
+      offset?: number;
+      type?: string;
+    }
+  ): Promise<{
+    events: LoyaltyEvent[];
+    pagination: {
+      total: number;
+      limit: number;
+      offset: number;
+      has_more: boolean;
+    };
+  }> {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.type) searchParams.set('type', params.type);
+    const query = searchParams.toString();
+    return fetchApi(`/stamp-programs/${id}/events${query ? `?${query}` : ''}`);
+  },
+};
+
+// Public Dashboard types
+export interface PublicDashboardData {
+  program: {
+    business_name: string;
+    total_stamps: number;
+    stamp_icon: string;
+    background_color: string;
+    accent_color: string;
+    reward_text: string;
+    trigger_keyword: string;
+    tier: string;
+  };
+  stats: {
+    total_customers: number;
+    active_cards: number;
+    total_stamps: number;
+    completed_cards: number;
+    stamps_this_week: number;
+    new_customers_this_week: number;
+    segments: {
+      new: number;
+      regular: number;
+      almost_there: number;
+      reward_ready: number;
+      lapsed: number;
+    };
+  };
+}
+
+// Public Dashboard API (no auth required)
+export const publicDashboardApi = {
+  async get(token: string): Promise<PublicDashboardData> {
+    // This endpoint doesn't require auth
+    const response = await fetch(`${API_BASE}/public/dashboard/${token}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error((data as ApiError).error || 'Failed to load dashboard');
+    }
+
+    return data as PublicDashboardData;
+  },
+};

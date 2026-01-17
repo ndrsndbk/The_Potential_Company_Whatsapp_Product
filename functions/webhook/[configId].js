@@ -4,6 +4,7 @@
 import { sbSelectOne, sbInsert, sbUpdate, sbUpsert } from '../lib/supabase.js';
 import { FlowEngine } from './_shared/engine.js';
 import { extractMessageContent, markAsRead, downloadAndUploadToCdn } from './_shared/whatsapp.js';
+import { handleStampMessage } from './_shared/stamp-handler.js';
 
 /**
  * Store incoming message and update conversation
@@ -232,6 +233,28 @@ export async function onRequestPost(context) {
 
     // Store incoming message in conversations table
     await storeIncomingMessage(env, configId, customerId, contactName, messageContent, messageId, mediaUrl);
+
+    // Check if this message relates to stamp programs BEFORE flow matching
+    // This handles: trigger keywords, verification responses (YES/NO)
+    try {
+      const stampResult = await handleStampMessage(
+        {
+          text: messageContent.text,
+          from: customerId,
+          contactName: contactName,
+        },
+        config,
+        env
+      );
+
+      if (stampResult.handled) {
+        console.log('[WEBHOOK] Message handled by stamp system');
+        return new Response('OK', { status: 200 });
+      }
+    } catch (stampError) {
+      // Log stamp handling errors but continue with normal flow processing
+      console.error('[WEBHOOK] Stamp handler error (continuing with flows):', stampError.message);
+    }
 
     // Store contact info in variables (will be available in flow)
     engine.variables = {
