@@ -80,15 +80,23 @@ export async function findProgramByTrigger(messageText, config, env) {
     return null;
   }
 
-  // Find matching program by trigger keyword
+  // Find matching program by trigger keyword or slug pattern
   for (const program of programs) {
-    if (!program.trigger_keyword) continue;
+    // Pattern 1: Existing trigger keyword (e.g., "Costa Sandton")
+    if (program.trigger_keyword) {
+      const triggerLower = program.trigger_keyword.toLowerCase().trim();
+      // Exact match or message starts with trigger
+      if (msgLower === triggerLower || msgLower.startsWith(triggerLower + ' ')) {
+        return program;
+      }
+    }
 
-    const triggerLower = program.trigger_keyword.toLowerCase().trim();
-
-    // Exact match or message starts with trigger
-    if (msgLower === triggerLower || msgLower.startsWith(triggerLower + ' ')) {
-      return program;
+    // Pattern 2: New {slug} STAMP format (e.g., "costa-sandton STAMP")
+    if (program.business_slug) {
+      const slugPattern = `${program.business_slug.toLowerCase()} stamp`;
+      if (msgLower === slugPattern || msgLower.startsWith(slugPattern + ' ')) {
+        return program;
+      }
     }
   }
 
