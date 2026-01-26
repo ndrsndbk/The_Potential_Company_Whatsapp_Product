@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/public/',
+  '/api/stamp-debug',
   '/webhook',
 ];
 
