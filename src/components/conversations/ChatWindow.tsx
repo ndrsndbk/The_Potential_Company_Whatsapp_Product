@@ -15,7 +15,7 @@ import {
   Paperclip,
   Mic,
   Camera,
-  File,
+  File as FileIcon,
 } from 'lucide-react';
 import { useChatWindowsStore } from '@/stores/chatWindowsStore';
 import { conversationsApi } from '@/lib/api';
@@ -487,14 +487,15 @@ export function ChatWindow({ window }: ChatWindowProps) {
         );
 
       case 'button':
-      case 'interactive':
+      case 'interactive': {
         // Render interactive message with buttons
+        const buttons = Array.isArray(meta.buttons) ? meta.buttons as Array<{ id: string; title: string }> : null;
         return (
           <div className="space-y-2">
             <p className="text-sm whitespace-pre-wrap break-words">{content}</p>
-            {meta.buttons && Array.isArray(meta.buttons) && (
+            {buttons && (
               <div className="space-y-1 pt-1 border-t border-gray-200">
-                {(meta.buttons as Array<{ id: string; title: string }>).map((btn, i) => (
+                {buttons.map((btn, i) => (
                   <div
                     key={btn.id || i}
                     className="text-center py-1.5 text-sm text-blue-500 bg-white/50 rounded"
@@ -506,27 +507,33 @@ export function ChatWindow({ window }: ChatWindowProps) {
             )}
           </div>
         );
+      }
 
-      case 'list':
+      case 'list': {
         // Render list message
+        const headerText = typeof meta.headerText === 'string' ? meta.headerText : null;
+        const footerText = typeof meta.footerText === 'string' ? meta.footerText : null;
+        const hasSections = Array.isArray(meta.sections);
+        const buttonText = typeof meta.buttonText === 'string' ? meta.buttonText : 'View Options';
         return (
           <div className="space-y-2">
-            {meta.headerText && (
-              <p className="text-sm font-bold">{meta.headerText as string}</p>
+            {headerText && (
+              <p className="text-sm font-bold">{headerText}</p>
             )}
             <p className="text-sm whitespace-pre-wrap break-words">{content}</p>
-            {meta.footerText && (
-              <p className="text-xs text-gray-500 italic">{meta.footerText as string}</p>
+            {footerText && (
+              <p className="text-xs text-gray-500 italic">{footerText}</p>
             )}
-            {meta.sections && Array.isArray(meta.sections) && (
+            {hasSections && (
               <div className="pt-1 border-t border-gray-200">
                 <div className="text-center py-1.5 text-sm text-blue-500 bg-white/50 rounded">
-                  {(meta.buttonText as string) || 'View Options'}
+                  {buttonText}
                 </div>
               </div>
             )}
           </div>
         );
+      }
 
       default:
         return <p className="text-sm whitespace-pre-wrap break-words">{content || '[Media]'}</p>;
@@ -757,7 +764,7 @@ export function ChatWindow({ window }: ChatWindowProps) {
               className="flex flex-col items-center gap-1 p-2 hover:bg-gray-100 rounded-lg"
             >
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                <File size={20} className="text-white" />
+                <FileIcon size={20} className="text-white" />
               </div>
               <span className="text-xs text-gray-600">Document</span>
             </button>

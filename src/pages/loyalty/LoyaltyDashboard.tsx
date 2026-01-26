@@ -88,14 +88,16 @@ export function LoyaltyDashboard() {
   // Calculate segment percentages
   const getSegmentPercentage = (segmentKey: string): number => {
     if (!stats?.segments) return 0;
-    const total = Object.values(stats.segments).reduce((a, b) => a + b, 0);
+    const segments = stats.segments as Record<string, number>;
+    const total = Object.values(segments).reduce((a, b) => a + b, 0);
     if (total === 0) return 0;
-    return Math.round((stats.segments[segmentKey] || 0) / total * 100);
+    return Math.round((segments[segmentKey] || 0) / total * 100);
   };
 
   const getSegmentCount = (segmentKey: string): number => {
     if (!stats?.segments) return 0;
-    return stats.segments[segmentKey] || 0;
+    const segments = stats.segments as Record<string, number>;
+    return segments[segmentKey] || 0;
   };
 
   return (

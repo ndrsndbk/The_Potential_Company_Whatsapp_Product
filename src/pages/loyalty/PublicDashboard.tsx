@@ -52,14 +52,16 @@ export function PublicDashboard() {
   // Calculate segment percentages
   const getSegmentPercentage = (segmentKey: string): number => {
     if (!data?.stats?.segments) return 0;
-    const total = Object.values(data.stats.segments).reduce((a, b) => a + b, 0);
+    const segments = data.stats.segments as Record<string, number>;
+    const total = Object.values(segments).reduce((a, b) => a + b, 0);
     if (total === 0) return 0;
-    return Math.round((data.stats.segments[segmentKey] || 0) / total * 100);
+    return Math.round((segments[segmentKey] || 0) / total * 100);
   };
 
   const getSegmentCount = (segmentKey: string): number => {
     if (!data?.stats?.segments) return 0;
-    return data.stats.segments[segmentKey] || 0;
+    const segments = data.stats.segments as Record<string, number>;
+    return segments[segmentKey] || 0;
   };
 
   if (loading) {

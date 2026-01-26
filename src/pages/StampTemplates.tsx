@@ -106,7 +106,6 @@ function StampCardPreview({
 
   // Calculate grid layout - 5 columns max
   const cols = Math.min(5, totalStamps);
-  const rows = Math.ceil(totalStamps / cols);
 
   return (
     <div

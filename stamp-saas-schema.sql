@@ -5,6 +5,30 @@
 -- =====================================================
 
 -- ===========================================
+-- TABLE: stamp_card_templates (MUST BE CREATED FIRST)
+-- Store stamp card visual templates
+-- ===========================================
+CREATE TABLE IF NOT EXISTS stamp_card_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  name VARCHAR(200) NOT NULL,
+  title VARCHAR(200) DEFAULT 'LOYALTY CARD',
+  subtitle VARCHAR(200),
+  total_stamps INTEGER NOT NULL DEFAULT 10,
+  stamp_icon VARCHAR(50) DEFAULT 'cup',
+  background_color VARCHAR(7) DEFAULT '#000000',
+  accent_color VARCHAR(7) DEFAULT '#ccff00',
+  logo_url TEXT,
+  reward_text VARCHAR(200),
+  font_family VARCHAR(100) DEFAULT 'Arial',
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_stamp_templates_org ON stamp_card_templates(organization_id);
+
+-- ===========================================
 -- TABLE: stamp_programs
 -- Business loyalty program configuration
 -- ===========================================
@@ -222,30 +246,6 @@ CREATE INDEX IF NOT EXISTS idx_stamp_onboarding_phone ON stamp_program_onboardin
 CREATE INDEX IF NOT EXISTS idx_stamp_onboarding_status ON stamp_program_onboarding(status);
 
 -- ===========================================
--- TABLE: stamp_card_templates (if not exists)
--- Store stamp card visual templates
--- ===========================================
-CREATE TABLE IF NOT EXISTS stamp_card_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  name VARCHAR(200) NOT NULL,
-  title VARCHAR(200) DEFAULT 'LOYALTY CARD',
-  subtitle VARCHAR(200),
-  total_stamps INTEGER NOT NULL DEFAULT 10,
-  stamp_icon VARCHAR(50) DEFAULT 'cup',
-  background_color VARCHAR(7) DEFAULT '#000000',
-  accent_color VARCHAR(7) DEFAULT '#ccff00',
-  logo_url TEXT,
-  reward_text VARCHAR(200),
-  font_family VARCHAR(100) DEFAULT 'Arial',
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_stamp_templates_org ON stamp_card_templates(organization_id);
-
--- ===========================================
 -- VIEWS: Analytics for Dashboard
 -- ===========================================
 
@@ -271,10 +271,21 @@ GROUP BY sp.id, sp.business_name, sp.tier, sp.is_active, sp.created_at, sp.stamp
 -- Customer Segments View
 CREATE OR REPLACE VIEW stamp_customer_segments AS
 SELECT
-  sc.*,
+  sc.id,
+  sc.program_id,
+  sc.wa_number,
+  sc.wa_name,
+  sc.current_stamps,
+  sc.total_stamps_earned,
+  sc.total_cards_completed,
+  sc.total_rewards_redeemed,
+  sc.first_stamp_at,
+  sc.last_stamp_at,
+  sc.last_activity_at,
+  sc.created_at,
+  sc.updated_at,
   sp.stamps_required,
   sp.business_name,
-  sp.id AS program_id,
   CASE
     WHEN sc.first_stamp_at > now() - interval '7 days' THEN 'new'
     WHEN sc.current_stamps >= sp.stamps_required THEN 'reward_ready'
