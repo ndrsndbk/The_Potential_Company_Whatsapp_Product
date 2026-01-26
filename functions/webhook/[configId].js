@@ -254,6 +254,14 @@ export async function onRequestPost(context) {
     } catch (stampError) {
       // Log stamp handling errors but continue with normal flow processing
       console.error('[WEBHOOK] Stamp handler error (continuing with flows):', stampError.message);
+      // Write error to database for debugging
+      try {
+        await sbInsert(env, 'error_log', [{
+          source: 'stamp_handler',
+          message: stampError.message,
+          details: JSON.stringify({ stack: stampError.stack?.substring(0, 500), text: messageContent.text, from: customerId })
+        }]);
+      } catch (logErr) { /* ignore logging errors */ }
     }
 
     // Store contact info in variables (will be available in flow)
