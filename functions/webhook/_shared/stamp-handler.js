@@ -541,37 +541,34 @@ export async function sendStampCard(customerPhone, program, stampCount, customer
     caption = `Thanks ${customerName || 'Valued Customer'}!\n\nYou now have ${stampCount}/${program.stamps_required} stamps at ${program.business_name}.\n\nOnly ${remaining} more stamp${remaining === 1 ? '' : 's'} until your reward: ${program.reward_description}`;
   }
 
-  // Send the stamp card image
-  try {
-    const result = await wa.sendImage(
-      config.access_token,
-      config.phone_number_id,
-      customerPhone,
-      stampCardUrl,
-      caption
-    );
+  // Always send the text message first (reliable delivery)
+  await wa.sendText(
+    config.access_token,
+    config.phone_number_id,
+    customerPhone,
+    caption
+  );
+  console.log('[STAMP] Stamp card text sent to:', customerPhone);
 
-    if (result.error) {
-      console.error('[STAMP] Failed to send stamp card image:', result.error);
-      // Fallback to text message if image fails
-      await wa.sendText(
+  // Additionally try to send the stamp card image if server is configured
+  if (env.STAMP_SERVER_URL) {
+    try {
+      const result = await wa.sendImage(
         config.access_token,
         config.phone_number_id,
         customerPhone,
+        stampCardUrl,
         caption
       );
-    } else {
-      console.log('[STAMP] Stamp card sent successfully to:', customerPhone);
+
+      if (result.error) {
+        console.error('[STAMP] Failed to send stamp card image:', result.error);
+      } else {
+        console.log('[STAMP] Stamp card image also sent to:', customerPhone);
+      }
+    } catch (error) {
+      console.error('[STAMP] Error sending stamp card image:', error);
     }
-  } catch (error) {
-    console.error('[STAMP] Error sending stamp card:', error);
-    // Fallback to text message
-    await wa.sendText(
-      config.access_token,
-      config.phone_number_id,
-      customerPhone,
-      caption
-    );
   }
 }
 
