@@ -116,7 +116,7 @@ export async function findPendingVerificationByOwner(ownerPhone, env) {
     env,
     'stamp_programs',
     `is_active=eq.true`,
-    'id,owner_wa_number,business_name,stamps_required,reward_description,stamp_template_id'
+    'id,owner_wa_number,business_name,stamps_required,reward_description,stamp_template_id,cards_base_url,cards_version,card_prefix'
   );
 
   if (!programs || programs.length === 0) return null;
@@ -497,41 +497,23 @@ export async function createVerificationRequest(program, customerPhone, customer
 }
 
 /**
+ * Build stamp card image URL from pre-generated images in Supabase Storage
+ * Images follow the pattern: {base_url}/{version}/{prefix}{stamp_count}.png
+ * Stamp count is clamped to 0-10 range (matching pre-generated image set)
+ */
+function buildCardUrl(program, stampCount) {
+  const base = program.cards_base_url || 'https://lhbtgjvejsnsrlstwlwl.supabase.co/storage/v1/object/public/cards';
+  const version = program.cards_version || 'v1';
+  const prefix = program.card_prefix || 'Demo_Shop_';
+  // Clamp stamp count to 0-10 range (pre-generated images only go up to 10)
+  const clamped = Math.max(0, Math.min(10, Number.isNaN(Number(stampCount)) ? 0 : Number(stampCount)));
+  return `${base}/${version}/${prefix}${clamped}.png`;
+}
+
+/**
  * Send stamp card image to customer
  */
 export async function sendStampCard(customerPhone, program, stampCount, customerName, cardCompleted, rewardCode, config, env) {
-  // Get the stamp server URL from environment or use default
-  const stampServerUrl = env.STAMP_SERVER_URL || 'https://stamp.thepotentialcompany.com';
-
-  // Build stamp card generation URL
-  const params = new URLSearchParams({
-    n: stampCount.toString(),
-    total: program.stamps_required.toString(),
-    name: customerName || 'Valued Customer',
-    business: program.business_name
-  });
-
-  // Add branding if available
-  if (program.brand_color_primary) {
-    params.append('primary', program.brand_color_primary);
-  }
-  if (program.brand_color_secondary) {
-    params.append('secondary', program.brand_color_secondary);
-  }
-  if (program.logo_url) {
-    params.append('logo', program.logo_url);
-  }
-  if (program.stamp_type) {
-    params.append('type', program.stamp_type);
-  }
-
-  // If there's a linked stamp template, use it
-  if (program.stamp_template_id) {
-    params.append('template_id', program.stamp_template_id);
-  }
-
-  const stampCardUrl = `${stampServerUrl}/generate-card?${params.toString()}`;
-
   // Build caption
   let caption = '';
   if (cardCompleted) {
@@ -541,33 +523,38 @@ export async function sendStampCard(customerPhone, program, stampCount, customer
     caption = `Thanks ${customerName || 'Valued Customer'}!\n\nYou now have ${stampCount}/${program.stamps_required} stamps at ${program.business_name}.\n\nOnly ${remaining} more stamp${remaining === 1 ? '' : 's'} until your reward: ${program.reward_description}`;
   }
 
-  // Always send the text message first (reliable delivery)
-  await wa.sendText(
-    config.access_token,
-    config.phone_number_id,
-    customerPhone,
-    caption
-  );
-  console.log('[STAMP] Stamp card text sent to:', customerPhone);
+  // For completed cards, show 0 stamps (fresh card) with a reward message;
+  // otherwise show the current stamp count
+  const imageStampCount = cardCompleted ? program.stamps_required : stampCount;
+  const stampCardUrl = buildCardUrl(program, imageStampCount);
+  console.log('[STAMP] Card image URL:', stampCardUrl);
 
-  // Additionally try to send the stamp card image if server is configured
-  if (env.STAMP_SERVER_URL) {
+  // Try to send the stamp card image first
+  try {
+    const result = await wa.sendImage(
+      config.access_token,
+      config.phone_number_id,
+      customerPhone,
+      stampCardUrl,
+      caption
+    );
+
+    if (result.error) {
+      console.error('[STAMP] Failed to send stamp card image:', JSON.stringify(result.error));
+      // Fall back to text-only
+      await wa.sendText(config.access_token, config.phone_number_id, customerPhone, caption);
+      console.log('[STAMP] Sent text fallback to:', customerPhone);
+    } else {
+      console.log('[STAMP] Stamp card image sent to:', customerPhone);
+    }
+  } catch (error) {
+    console.error('[STAMP] Error sending stamp card image:', error.message);
+    // Fall back to text-only
     try {
-      const result = await wa.sendImage(
-        config.access_token,
-        config.phone_number_id,
-        customerPhone,
-        stampCardUrl,
-        caption
-      );
-
-      if (result.error) {
-        console.error('[STAMP] Failed to send stamp card image:', result.error);
-      } else {
-        console.log('[STAMP] Stamp card image also sent to:', customerPhone);
-      }
-    } catch (error) {
-      console.error('[STAMP] Error sending stamp card image:', error);
+      await wa.sendText(config.access_token, config.phone_number_id, customerPhone, caption);
+      console.log('[STAMP] Sent text fallback to:', customerPhone);
+    } catch (textError) {
+      console.error('[STAMP] Failed to send text fallback:', textError.message);
     }
   }
 }
